@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mega Texno — Umumiy Baza</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Firebase SDK (Compat v9) for Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- QR: yaratish va o'qish -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .sidebar-bg {
+            background: linear-gradient(180deg, #092c22 0%, #0d3b2e 50%, #07221a 100%);
+        }
+        .login-bg {
+            background: radial-gradient(circle at top right, #1f8a65 0%, #0d3b2e 45%, #061c16 100%);
+        }
+        .nav-item {
+            color: #99bfb3;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, #229971 0%, #156e4f 100%);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(21, 110, 79, 0.35);
+        }
+        .hero-kassa {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f3d2e 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-kassa::after {
+            content: '';
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .btn-teal {
+            background: linear-gradient(135deg, #1b7a58 0%, #11543c 100%);
+            color: #ffffff;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(20, 94, 75, 0.22);
+        }
+        .btn-teal:hover {
+            background: linear-gradient(135deg, #218f68 0%, #146347 100%);
+            box-shadow: 0 6px 14px rgba(20, 94, 75, 0.32);
+            transform: translateY(-1px);
+        }
+        .btn-teal:active {
+            transform: scale(0.98);
+        }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+        }
+        /* ===== QR skaner ===== */
+        .scan-frame { box-shadow: 0 0 0 9999px rgba(0,0,0,.55); }
+        .scan-line { animation: scanmove 2s ease-in-out infinite alternate; }
+        @keyframes scanmove { from { top: 6%; } to { top: 92%; } }
+        .flash-field { animation: flashf 1.2s ease; }
+        @keyframes flashf { 0%,100% { box-shadow: 0 0 0 0 rgba(31,138,101,0); } 30% { box-shadow: 0 0 0 4px rgba(31,138,101,.45); } }
+        /* ===== QR chop etish ===== */
+        #qr-print-area { display: none; }
+        .qr-label { box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; break-after: page; page-break-after: always; }
+        .qr-label:last-child { break-after: auto; page-break-after: auto; }
+        .qr-label.col { flex-direction: column; }
+        .qr-label.row { flex-direction: row; }
+        .qr-label img { display: block; image-rendering: auto; flex-shrink: 0; }
+        .qr-label .qr-name { font-weight: 700; line-height: 1.1; text-align: center; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .qr-label.row .qr-name { text-align: left; -webkit-line-clamp: 4; }
+        #qr-print-area.a4 { display: none; flex-wrap: wrap; align-content: flex-start; }
+        .qr-label.a4 { break-after: auto; page-break-after: auto; break-inside: avoid; border: 0.2mm dashed #999; }
+        @media print {
+            body > *:not(#qr-print-area) { display: none !important; }
+            body { display: block !important; background: #fff !important; min-height: 0 !important; overflow: visible !important; }
+            #qr-print-area { display: block !important; }
+            #qr-print-area.a4 { display: flex !important; }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 z-50 login-bg flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-sm p-7 sm:p-8 transition-all">
+            <div class="flex flex-col items-center text-center mb-7">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#24a177] to-[#125840] flex items-center justify-center text-white text-2xl shadow-lg shadow-emerald-900/30 mb-3.5 ring-4 ring-emerald-50">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Mega Texno</h1>
+                <p class="text-xs text-slate-500 font-medium mt-1">Umumiy Baza · Realtime DB Tizim</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-0.5">Login</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="login-username" placeholder="Loginni kiriting" required autocomplete="username"
+                            class="w-full pl-10 pr-4 py-3 bg-slate-50/90 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#1f8a65] focus:ring-4 focus:ring-emerald-500/10 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5 ml-0.5">Parol</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="password" id="login-password" placeholder="Parolni kiriting" required autocomplete="current-password"
+                            class="w-full pl-10 pr-10 py-3 bg-slate-50/90 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#1f8a65] focus:ring-4 focus:ring-emerald-500/10 transition">
+                        <button type="button" onclick="toggleLoginPass()" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 text-xs p-1">
+                            <i id="login-eye" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-600 text-xs font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="login-error-text">Login yoki parol noto'g'ri!</span>
+                </div>
+
+                <div class="pt-1">
+                    <button type="submit" class="w-full btn-teal py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Tizimga kirish</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MOBILE DRAWER BACKDROP ================= -->
+    <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-30 hidden md:hidden transition-opacity"></div>
+
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <aside id="sidebar" class="sidebar-bg fixed md:static inset-y-0 left-0 z-40 w-64 flex-shrink-0 flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out select-none shadow-2xl md:shadow-none">
+        <div>
+            <!-- Brand Header -->
+            <div class="p-4.5 px-5 py-4 flex items-center justify-between border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#28ad80] to-[#177052] flex items-center justify-center text-white shadow-md flex-shrink-0">
+                        <i class="fa-solid fa-cube text-base"></i>
+                    </div>
+                    <div>
+                        <div class="text-white font-extrabold text-base leading-tight tracking-tight">Mega Texno</div>
+                        <div class="text-[#8ab5a8] text-[11px] font-medium">Umumiy Baza · Sklad</div>
+                    </div>
+                </div>
+                <button onclick="closeMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1.5">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Items -->
+            <nav class="p-3.5 space-y-1.5">
+                <button onclick="switchTab('bosh')" id="nav-bosh" class="nav-item active w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Bosh sahifa</span>
+                </button>
+                <button onclick="switchTab('ombor')" id="nav-ombor" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-box-archive w-5 text-center"></i>
+                    <span>Ombor</span>
+                </button>
+                <button onclick="switchTab('harakat')" id="nav-harakat" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-arrows-up-down w-5 text-center"></i>
+                    <span>Harakat (Sotuv)</span>
+                </button>
+                <button onclick="switchTab('qarz')" id="nav-qarz" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-hand-holding-dollar w-5 text-center"></i>
+                    <span>Qarz daftari</span>
+                </button>
+                <button onclick="switchTab('kontakt')" id="nav-kontakt" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-address-book w-5 text-center"></i>
+                    <span>Kontaktlar</span>
+                </button>
+                <button onclick="switchTab('xarajat')" id="nav-xarajat" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-receipt w-5 text-center"></i>
+                    <span>Xarajatlar</span>
+                </button>
+                <button onclick="switchTab('hisobot')" id="nav-hisobot" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-chart-column w-5 text-center"></i>
+                    <span>Hisobotlar</span>
+                </button>
+                <button onclick="switchTab('xodim')" id="nav-xodim" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm">
+                    <i class="fa-solid fa-user-gear w-5 text-center"></i>
+                    <span>Xodimlar</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-white/10 space-y-2.5">
+            <div class="text-[11px] text-[#8ab5a8]/80 text-center font-medium">Mega Texno</div>
+        </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT WRAPPER ================= -->
+    <div class="flex-1 flex flex-col min-w-0 w-full">
+
+        <!-- TOP HEADER -->
+        <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-6 py-2.5 flex items-center justify-between gap-2 sticky top-0 z-20">
+            <div class="flex items-center gap-3">
+                <button onclick="openMobileSidebar()" class="md:hidden w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition">
+                    <i class="fa-solid fa-bars text-base"></i>
+                </button>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">Mega Texno</h1>
+                    </div>
+                    <p id="header-user-info" class="text-[11px] text-slate-500 font-semibold">ADMIN63 · Admin</p>
+                </div>
+            </div>
+
+            <!-- Top Right Controls -->
+            <div class="flex items-center flex-wrap justify-end gap-1.5 sm:gap-2">
+                <button onclick="switchTab('ombor-add')" title="Mahsulot qo'shish" class="w-8 h-8 btn-teal rounded-xl font-black text-lg leading-none flex items-center justify-center">+</button>
+                <button onclick="openRateModal()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl text-[11px] sm:text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition shadow-2xs">
+                    <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">$</span>
+                    <span>Kurs: <strong id="header-rate" class="text-slate-900">12800</strong></span>
+                </button>
+                <button onclick="openPasswordModal()" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl text-[11px] sm:text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition shadow-2xs">
+                    <i class="fa-solid fa-key text-amber-500 text-[10px]"></i>
+                    <span>Parol</span>
+                </button>
+                <button onclick="logoutUser()" class="px-3 py-1.5 bg-slate-50 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-slate-200/90 rounded-xl text-[11px] sm:text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
+                    <span class="hidden xs:inline">Chiqish</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN BODY CONTAINER -->
+        <main class="p-3.5 sm:p-6 flex-1 space-y-5 max-w-6xl w-full mx-auto pb-24 md:pb-10">
+
+            <!-- ================= 1. BOSH (DASHBOARD) ================= -->
+            <section id="tab-bosh" class="space-y-5">
+                <!-- Hero Kassa Card -->
+                <div class="hero-kassa rounded-2xl p-5 sm:p-6 text-white shadow-lg">
+                    <div class="flex flex-wrap items-start justify-between gap-4 relative z-10">
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 text-xs text-slate-300 font-medium">
+                                <span class="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center">
+                                    <i class="fa-solid fa-wallet text-xs"></i>
+                                </span>
+                                <span>Umumiy kassa (Mening - sotganlar va narsalar ichida)</span>
+                            </div>
+                            <div id="dash-kassa-uzs" class="text-2xl sm:text-4xl font-black tracking-tight">
+                                0 so'm
+                            </div>
+                            <div class="pt-1 flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold px-3 py-1 rounded-lg">
+                                    <i class="fa-solid fa-sack-dollar text-amber-300"></i>
+                                    <span id="dash-ombor-badge">Jami aktiv: ≈ $0.0 (Kurs: 12800)</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <select id="dash-period-filter" onchange="renderDashboard()" class="bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-semibold px-3.5 py-2 rounded-xl focus:outline-none cursor-pointer">
+                                <option value="all" class="text-slate-900">Barcha vaqt</option>
+                                <option value="today" class="text-slate-900">Bugun</option>
+                                <option value="month" class="text-slate-900">Shu oy</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5 Metric Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                    <div class="stat-card p-4 shadow-2xs flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[11px] text-slate-400 font-semibold">Bugungi savdo</div>
+                            <div id="stat-today-sales" class="text-base font-extrabold text-slate-900 truncate">0 so'm</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-4 shadow-2xs flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[11px] text-slate-400 font-semibold">Oylik savdo</div>
+                            <div id="stat-month-sales" class="text-base font-extrabold text-slate-900 truncate">0 so'm</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-4 shadow-2xs flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[11px] text-slate-400 font-semibold">Oylik sof foyda</div>
+                            <div id="stat-month-profit" class="text-base font-extrabold text-emerald-700 truncate">0 so'm</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-4 shadow-2xs flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="fa-solid fa-user-clock"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[11px] text-slate-400 font-semibold">Mijozlar qarzi</div>
+                            <div id="stat-cust-debt" class="text-base font-extrabold text-amber-600 truncate">0 so'm</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-4 shadow-2xs flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="fa-solid fa-scale-unbalanced"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[11px] text-slate-400 font-semibold">Bizning qarzimiz</div>
+                            <div id="stat-our-debt" class="text-base font-extrabold text-red-600 truncate">0 so'm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 14 Days Chart & Categories -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="stat-card p-5 shadow-2xs lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2 text-xs font-extrabold text-slate-800">
+                                <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-column"></i>
+                                </span>
+                                <span>Savdo dinamikasi (Oxirgi 14 kun)</span>
+                            </div>
+                            <span class="text-[11px] font-medium text-slate-400">Kunlik tushum</span>
+                        </div>
+                        <div id="chart-14-bars" class="h-36 flex items-end justify-between gap-1.5 pt-4 border-b border-slate-100 px-1"></div>
+                        <div id="chart-14-labels" class="flex justify-between text-[10px] font-semibold text-slate-400 pt-2 px-1"></div>
+                    </div>
+
+                    <div class="stat-card p-5 shadow-2xs">
+                        <div class="flex items-center gap-2 text-xs font-extrabold text-slate-800 mb-3">
+                            <span class="w-6 h-6 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </span>
+                            <span>Kategoriyalar (Shu oy)</span>
+                        </div>
+                        <div id="dash-categories" class="text-xs text-slate-400 space-y-2">
+                            Bu oyda sotuv yo'q
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= 2. OMBOR ================= -->
+            <section id="tab-ombor" class="space-y-4 hidden">
+                <div id="ombor-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-3">Kategoriyalar</h3>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="cat-new" placeholder="Yangi kategoriya (Konditsioner, Muzlatgich...)" class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <button type="button" onclick="addCategory()" class="btn-teal rounded-xl text-xs font-bold px-4 py-2.5">+ Qo'shish</button>
+                    </div>
+                    <div id="cat-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <h3 class="text-sm font-extrabold text-slate-800">Ombordagi mahsulotlar ro'yxati</h3>
+                        <button type="button" onclick="openPrintModal()" class="btn-teal rounded-xl text-xs font-bold px-3.5 py-2 flex items-center gap-2"><i class="fa-solid fa-print"></i><span>Hamma QR-kodlarni chop etish</span></button>
+                        <select id="ombor-cat-filter" onchange="renderOmbor()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"></select>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="ombor-search" oninput="renderOmbor()" placeholder="Mahsulot qidirish..."
+                                class="pl-8 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-400 font-bold">
+                                    <th class="py-3 px-2">Nomi</th>
+                                    <th class="py-3 px-2">Kategoriya</th>
+                                    <th class="py-3 px-2">Kelish narxi</th>
+                                    <th class="py-3 px-2">Sotish narxi</th>
+                                    <th class="py-3 px-2">Qoldiq</th>
+                                    <th class="py-3 px-2 text-right">Amal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ombor-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-ombor-add" class="space-y-4 hidden">
+                <button onclick="switchTab('ombor')" class="text-xs font-bold text-slate-600 hover:text-[#1f8a65] flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Omborga qaytish</button>
+                <div class="stat-card p-5 shadow-2xs">
+                    <h2 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-[#1f8a65] flex items-center justify-center">
+                            <i class="fa-solid fa-box-open"></i>
+                        </span>
+                        <span>Yangi mahsulot qo'shish</span>
+                    </h2>
+                    <form id="ombor-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                        <input type="text" id="p-name" placeholder="Mahsulot nomi (Artel TV 43)" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65] lg:col-span-2">
+                        <select id="p-cat" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></select>
+                        <div class="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50 focus-within:bg-white focus-within:border-[#1f8a65]">
+                            <select id="p-curr" class="bg-slate-100 text-xs font-bold px-2.5 py-2.5 border-r border-slate-200 text-slate-700">
+                                <option value="UZS">so'm</option>
+                                <option value="USD">$</option>
+                            </select>
+                            <input type="number" step="any" id="p-buy" placeholder="Kelish narxi (ixtiyoriy)"
+                                class="w-full px-3 py-2.5 bg-transparent text-xs font-medium focus:outline-none">
+                        </div>
+                        <input type="number" step="any" id="p-sell" placeholder="Sotish narxi (ixtiyoriy)"
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <div class="flex gap-2">
+                            <input type="number" id="p-qty" placeholder="Soni" required min="0"
+                                class="w-24 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                            <button type="submit" class="flex-1 btn-teal rounded-xl text-xs font-bold px-3 py-2.5">
+                                + Qo'shish
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="stat-card p-4 shadow-2xs">
+                    <div class="text-xs font-extrabold text-slate-800 mb-2.5 flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#1f8a65]"></i> Kategoriya ro'yxatda yo'qmi? Yangisini qo'shing</div>
+                    <div class="flex gap-2">
+                        <input type="text" id="p-cat-new" placeholder="Masalan: Muzlatgich, Konditsioner..." class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <button type="button" onclick="addCategory('p-cat-new', true)" class="btn-teal rounded-xl text-xs font-bold px-4 py-2.5">+ Qo'shish</button>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 px-1">Narxlar ixtiyoriy — keyin ✎ tugmasi orqali kiritish mumkin. Qo'shgandan keyin shu sahifada yana mahsulot qo'shishingiz mumkin.</p>
+            </section>
+
+            <!-- ================= 3. HARAKAT (SOTUV) ================= -->
+            <section id="tab-harakat" class="space-y-4 hidden">
+                <div class="stat-card p-5 shadow-2xs">
+                    <div id="m-types" class="flex flex-wrap gap-1.5 mb-3.5"><button type="button" data-t="sotuv" onclick="setMoveType('sotuv')" class="mt-btn px-3.5 py-2 rounded-xl text-xs font-bold">Sotuv</button><button type="button" data-t="brak" onclick="setMoveType('brak')" class="mt-btn px-3.5 py-2 rounded-xl text-xs font-bold">Brak</button><button type="button" data-t="vozvrat" onclick="setMoveType('vozvrat')" class="mt-btn px-3.5 py-2 rounded-xl text-xs font-bold">Vozvrat</button><button type="button" data-t="qaytarish" onclick="setMoveType('qaytarish')" class="mt-btn px-3.5 py-2 rounded-xl text-xs font-bold">Yetkazuvchiga qaytarish</button><button type="button" data-t="kirim" onclick="setMoveType('kirim')" class="mt-btn px-3.5 py-2 rounded-xl text-xs font-bold">Kirim</button><button type="button" onclick="openScanner()" title="QR-kod orqali mahsulotni tanlash" class="sm:ml-auto btn-teal px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2"><i class="fa-solid fa-qrcode text-base"></i><span>QR skaner</span></button></div>
+                    <form id="sale-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <select id="s-product" required onchange="onSelectSaleProduct()" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65] lg:col-span-2"><option value="">Ombordan mahsulot tanlang...</option></select>
+                        <input type="number" id="s-qty" value="1" min="1" required placeholder="Soni" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <input type="number" step="any" id="s-price" placeholder="Narxi (1 dona)" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <select id="s-payment" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"><option value="Naqd">Naqd so'm</option><option value="Plastik">Plastik karta</option><option value="Click">Click</option><option value="Payme">Payme</option><option value="Qarz">Nasiya (Qarzga)</option></select>
+                        <input type="text" id="s-customer" placeholder="Mijoz ismi va tel (Nasiya bo'lsa shart)" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65] lg:col-span-2">
+                        <input type="text" id="s-note" placeholder="Izoh (ixtiyoriy)" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+                        <select id="s-seller" title="Kim sotdi" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></select>
+                        <button type="submit" id="s-submit" class="btn-teal py-2.5 px-4 rounded-xl text-xs font-bold"><i class="fa-solid fa-check mr-1"></i> <span>Sotish</span></button>
+                    </form>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+                        <h3 class="text-sm font-extrabold text-slate-800">Harakatlar tarixi</h3>
+                        <select id="h-filter" onchange="renderHarakat()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none">
+                            <option value="">Hammasi</option><option value="sotuv">Sotuv</option><option value="brak">Brak</option><option value="vozvrat">Vozvrat</option><option value="qaytarish">Yetkazuvchiga qaytarish</option><option value="kirim">Kirim</option><option value="tolov">Qarz to'lovi</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead><tr class="border-b border-slate-200 text-slate-400 font-bold">
+                                <th class="py-3 px-2">Sana</th><th class="py-3 px-2">Tur</th><th class="py-3 px-2">Mahsulot</th><th class="py-3 px-2">Mijoz / izoh</th><th class="py-3 px-2">Kim</th><th class="py-3 px-2">Soni</th><th class="py-3 px-2">Narxi (1 dona)</th><th class="py-3 px-2">Summa</th><th class="py-3 px-2">To'lov</th><th class="py-3 px-2 text-right">Amal</th>
+                            </tr></thead>
+                            <tbody id="harakat-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= 4. QARZ ================= -->
+            <section id="tab-qarz" class="space-y-4 hidden">
+                <div class="stat-card p-5 shadow-2xs">
+                    <h2 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </span>
+                        <span>Qarz qo'shish</span>
+                    </h2>
+                    <form id="debt-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <select id="d-type" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                            <option value="customer">Mijoz qarzi (Bizga beradi)</option>
+                            <option value="our">Bizning qarzimiz (Biz beramiz)</option>
+                        </select>
+                        <input type="text" id="d-person" placeholder="Ism va telefon raqam" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <input type="number" id="d-amount" placeholder="Qarz summasi (so'm)" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <input type="text" id="d-note" placeholder="Izoh / Mahsulot"
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <button type="submit" class="btn-teal rounded-xl text-xs font-bold py-2.5 px-4">
+                            + Qarz yozish
+                        </button>
+                    </form>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-3.5">Faol qarzlar ro'yxati</h3>
+                    <div id="qarz-list" class="space-y-2.5 text-xs"></div>
+                </div>
+            </section>
+
+            <!-- ================= 5. KONTAKT ================= -->
+            <section id="tab-kontakt" class="space-y-4 hidden">
+                <div class="stat-card p-5 shadow-2xs">
+                    <h2 class="text-sm font-extrabold text-slate-800 mb-3.5">Yangi kontakt (Mijoz / Ta'minotchi)</h2>
+                    <form id="contact-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <input type="text" id="c-name" placeholder="Ism yoki Firma nomi" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <input type="text" id="c-phone" placeholder="Telefon raqam (+998...)" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <select id="c-role" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                            <option value="Mijoz">Mijoz</option>
+                            <option value="Ta'minotchi">Ta'minotchi (Optomchi)</option>
+                        </select>
+                        <button type="submit" class="btn-teal rounded-xl text-xs font-bold py-2.5 px-4">
+                            + Kontakt qo'shish
+                        </button>
+                    </form>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-3.5">Saqlangan kontaktlar</h3>
+                    <div id="contact-list" class="divide-y divide-slate-100 text-xs"></div>
+                </div>
+            </section>
+
+            <!-- ================= 6. XARAJAT ================= -->
+            <section id="tab-xarajat" class="space-y-4 hidden">
+                <div class="stat-card p-5 shadow-2xs">
+                    <h2 class="text-sm font-extrabold text-slate-800 mb-3.5">Do'kon xarajatini kiritish</h2>
+                    <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <input type="text" id="e-title" placeholder="Xarajat nomi (Ijara, Tushlik, Yo'l...)" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <input type="number" id="e-amount" placeholder="Summa (so'm)" required
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                        <select id="e-method" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
+                            <option value="Naqd">Naqd kassadan</option>
+                            <option value="Plastik">Plastik / Click / Payme</option>
+                        </select>
+                        <button type="submit" class="btn-teal rounded-xl text-xs font-bold py-2.5 px-4">
+                            + Xarajat yozish
+                        </button>
+                    </form>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-3.5">Xarajatlar tarixi</h3>
+                    <div id="expense-list" class="divide-y divide-slate-100 text-xs"></div>
+                </div>
+            </section>
+
+            <!-- ================= 7. HISOBOT ================= -->
+            <section id="tab-hisobot" class="space-y-4 hidden">
+                <div id="rep-period" class="flex gap-1.5 overflow-x-auto pb-0.5"></div>
+                <div class="hero-kassa rounded-2xl p-5 text-white shadow-lg">
+                    <div class="relative z-10">
+                        <div class="text-xs text-slate-300 font-medium flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-amber-300"></i> Sof foyda <span id="rep-period-label" class="opacity-70"></span></div>
+                        <div id="rep-profit" class="text-3xl sm:text-4xl font-black tracking-tight mt-1.5">0 so'm</div>
+                        <div class="grid grid-cols-3 gap-2 mt-4 text-[11px]">
+                            <div class="bg-white/10 rounded-xl p-2.5"><div class="text-slate-300">Tushum</div><div id="rep-sales" class="font-extrabold text-sm mt-0.5">0</div></div>
+                            <div class="bg-white/10 rounded-xl p-2.5"><div class="text-slate-300">Yalpi foyda</div><div id="rep-gross" class="font-extrabold text-sm mt-0.5">0</div></div>
+                            <div class="bg-white/10 rounded-xl p-2.5"><div class="text-slate-300">Xarajat</div><div id="rep-expenses" class="font-extrabold text-sm mt-0.5">0</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="stat-card p-4 shadow-2xs"><div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5"><span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-receipt text-[10px]"></i></span>Sotuvlar soni</div><div id="rep-count" class="text-base sm:text-lg font-extrabold text-slate-900 mt-2">0 so'm</div></div>
+                    <div class="stat-card p-4 shadow-2xs"><div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5"><span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-warehouse text-[10px]"></i></span>Ombor qiymati</div><div id="rep-stock-val" class="text-base sm:text-lg font-extrabold text-slate-900 mt-2">0 so'm</div></div>
+                    <div class="stat-card p-4 shadow-2xs"><div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5"><span class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-hand-holding-dollar text-[10px]"></i></span>Mijozlar qarzi</div><div id="rep-debt-in" class="text-base sm:text-lg font-extrabold text-slate-900 mt-2">0 so'm</div></div>
+                    <div class="stat-card p-4 shadow-2xs"><div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5"><span class="w-6 h-6 rounded-lg bg-red-50 text-red-600 flex items-center justify-center"><i class="fa-solid fa-file-invoice-dollar text-[10px]"></i></span>Bizning qarzimiz</div><div id="rep-debt-out" class="text-base sm:text-lg font-extrabold text-slate-900 mt-2">0 so'm</div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="stat-card p-5 shadow-2xs"><h3 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2"><i class="fa-solid fa-wallet text-[#1f8a65]"></i>To'lov turlari bo'yicha tushum</h3><div id="rep-methods" class="space-y-3"></div></div>
+                    <div class="stat-card p-5 shadow-2xs"><h3 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#1f8a65]"></i>Kategoriyalar bo'yicha sotuv</h3><div id="rep-cats" class="space-y-3"></div></div>
+                    <div class="stat-card p-5 shadow-2xs"><h3 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2"><i class="fa-solid fa-user-tie text-[#1f8a65]"></i>Sotuvchilar bo'yicha</h3><div id="rep-sellers" class="space-y-3"></div></div>
+                    <div class="stat-card p-5 shadow-2xs"><h3 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2"><i class="fa-solid fa-fire text-[#1f8a65]"></i>Eng ko'p sotilgan mahsulotlar</h3><div id="rep-top" class="space-y-3"></div></div>
+                </div>
+                <div class="stat-card p-5 shadow-2xs"><h3 class="text-sm font-extrabold text-slate-800 mb-3.5 flex items-center gap-2"><i class="fa-solid fa-rotate-left text-[#1f8a65]"></i>Brak, vozvrat va boshqa harakatlar</h3><div id="rep-moves" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div></div>
+            </section>
+
+            <!-- ================= 8. XODIM ================= -->
+            <section id="tab-xodim" class="space-y-4 hidden">
+                <div id="staff-stats" class="grid grid-cols-3 gap-3"></div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <div class="flex items-center gap-2 text-sm font-extrabold text-slate-800 mb-3.5">
+                        <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-users text-xs"></i></span>
+                        <span>Xodimlar va adminlar</span>
+                    </div>
+                    <div id="staff-list" class="space-y-2.5"></div>
+                </div>
+
+                <div class="stat-card p-5 shadow-2xs">
+                    <div class="flex items-center gap-2 text-sm font-extrabold text-slate-800 mb-3.5">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-user-plus text-xs"></i></span>
+                        <span>Yangi xodim qo'shish</span>
+                    </div>
+                    <form id="staff-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="block"><span class="text-[11px] font-bold text-slate-500 mb-1 block">Login</span>
+                            <input type="text" id="st-login" placeholder="Masalan: Sardor2024" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></label>
+                        <label class="block"><span class="text-[11px] font-bold text-slate-500 mb-1 block">Parol (kamida 6 belgi)</span>
+                            <input type="password" id="st-pass" placeholder="••••••" minlength="6" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></label>
+                        <label class="block sm:col-span-2"><span class="text-[11px] font-bold text-slate-500 mb-1 block">Lavozim</span>
+                            <select id="st-role" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"><option value="Xodim">Xodim — sotuv va ombor</option><option value="Admin">Admin — to'liq huquq</option></select></label>
+                        <button type="submit" class="sm:col-span-2 btn-teal py-2.5 rounded-xl text-xs font-bold">+ Xodim qo'shish</button>
+                    </form>
+                </div>
+
+                <div class="rounded-2xl border border-red-200 bg-red-50/40 p-5">
+                    <div class="text-sm font-extrabold text-red-700 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Xavfli hudud</div>
+                    <p class="text-[11px] text-slate-500 mt-1.5 mb-3">Ombor, sotuvlar, qarzlar va xarajatlar tozalanadi. Xodimlar va kategoriyalar saqlanadi.</p>
+                    <button onclick="openClearModal()" class="px-4 py-2.5 border border-red-300 bg-white hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold inline-flex items-center gap-2 transition">
+                        <i class="fa-solid fa-trash-can"></i><span>Hamma ma'lumotni o'chirish</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ================= MOBILE BOTTOM BAR ================= -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-20 grid grid-cols-5 py-1.5 px-1 text-[10px] font-semibold text-slate-500">
+        <button onclick="switchTab('bosh')" id="mnav-bosh" class="flex flex-col items-center gap-0.5 py-1 text-[#1f8a65] font-bold">
+            <i class="fa-solid fa-chart-pie text-sm"></i>
+            <span>Bosh</span>
+        </button>
+        <button onclick="switchTab('ombor')" id="mnav-ombor" class="flex flex-col items-center gap-0.5 py-1">
+            <i class="fa-solid fa-box-archive text-sm"></i>
+            <span>Ombor</span>
+        </button>
+        <button onclick="switchTab('harakat')" id="mnav-harakat" class="flex flex-col items-center gap-0.5 py-1">
+            <i class="fa-solid fa-arrows-up-down text-sm"></i>
+            <span>Harakat</span>
+        </button>
+        <button onclick="switchTab('qarz')" id="mnav-qarz" class="flex flex-col items-center gap-0.5 py-1">
+            <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
+            <span>Qarz</span>
+        </button>
+        <button onclick="switchTab('xodim')" id="mnav-xodim" class="flex flex-col items-center gap-0.5 py-1">
+            <i class="fa-solid fa-user-gear text-sm"></i>
+            <span>Xodim</span>
+        </button>
+    </nav>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- ===== QR: skaner oynasi ===== -->
+    <div id="scan-modal" class="fixed inset-0 z-[60] bg-black flex flex-col hidden">
+        <div class="flex items-center justify-between px-4 py-3 text-white bg-black/70 z-10">
+            <div class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-qrcode"></i> QR-kodni skanerlash</div>
+            <button type="button" onclick="closeScanner()" class="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="relative flex-1 overflow-hidden">
+            <video id="scan-video" class="absolute inset-0 w-full h-full object-cover" playsinline muted autoplay></video>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="scan-frame relative w-64 h-64 max-w-[70vw] max-h-[70vw] rounded-3xl border-2 border-emerald-400">
+                    <div class="scan-line absolute left-3 right-3 h-0.5 bg-emerald-400/90 rounded"></div>
+                </div>
+            </div>
+            <div class="absolute bottom-0 inset-x-0 p-4 text-center bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+                <div id="scan-status" class="text-sm font-bold text-white leading-snug">Kamera ochilmoqda...</div>
+                <div class="flex flex-wrap gap-2 justify-center mt-3">
+                    <button type="button" onclick="startCamera()" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-rotate-right"></i> Qayta urinish</button>
+                    <label class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-camera"></i> Rasmga olish
+                        <input id="scan-file" type="file" accept="image/*" capture="environment" class="hidden" onchange="scanFromFile(this)">
+                    </label>
+                    <button type="button" onclick="scanManual()" class="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-keyboard"></i> Kod kiritish</button>
+                </div>
+            </div>
+        </div>
+        <canvas id="scan-canvas" class="hidden"></canvas>
+    </div>
+
+    <!-- ===== QR: bitta mahsulot yorlig'i ===== -->
+    <div id="qr-modal" onclick="if(event.target===this)closeQrModal()" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-qrcode text-[#1f8a65]"></i> Mahsulot yorlig'i</h3>
+            <img id="qr-img" alt="Yorliq" class="w-full rounded-xl border border-slate-200 bg-white">
+            <label class="block text-[11px] font-bold text-slate-500">Yorliq o'lchami
+                <select id="qr-fmt1" onchange="onQrFmt1Change()" class="mt-1 w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]"></select>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="downloadQr()" class="btn-teal rounded-xl text-xs font-bold px-3 py-2.5 flex items-center justify-center gap-1.5"><i class="fa-solid fa-download"></i> Yuklab olish</button>
+                <button type="button" onclick="printOneQr()" class="border border-slate-200 rounded-xl text-xs font-bold px-3 py-2.5 flex items-center justify-center gap-1.5 hover:bg-slate-50"><i class="fa-solid fa-print"></i> Chop etish</button>
+            </div>
+            <button type="button" onclick="closeQrModal()" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Yopish</button>
+        </div>
+    </div>
+
+    <!-- ===== QR: hammasini chop etish ===== -->
+    <div id="qr-print-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-print text-[#1f8a65]"></i> QR yorliqlarni chop etish</h3>
+            <label class="block text-[11px] font-bold text-slate-500">Qaysi mahsulotlar
+                <select id="qp-scope" onchange="updatePrintInfo()" class="mt-1 w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+                    <option value="all">Hamma mahsulotlar</option>
+                    <option value="filter">Faqat ro'yxatda ko'rinayotganlar (filtr/qidiruv)</option>
+                </select>
+            </label>
+            <label class="block text-[11px] font-bold text-slate-500">Yorliq o'lchami
+                <select id="qp-fmt" onchange="updatePrintInfo()" class="mt-1 w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+                    <option value="40x30">40 × 30 mm</option>
+                    <option value="50x30">50 × 30 mm</option>
+                    <option value="58x40">58 × 40 mm</option>
+                    <option value="60x40">60 × 40 mm</option>
+                    <option value="70x50">70 × 50 mm</option>
+                    <option value="a4">A4 varaq (jadval, qaychi bilan kesish)</option>
+                    <option value="custom">Boshqa o'lcham...</option>
+                </select>
+            </label>
+            <div id="qp-custom" class="hidden grid grid-cols-2 gap-2">
+                <input type="number" id="qp-w" min="25" max="200" value="58" oninput="updatePrintInfo()" placeholder="Eni (mm)" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+                <input type="number" id="qp-h" min="20" max="200" value="40" oninput="updatePrintInfo()" placeholder="Bo'yi (mm)" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            </div>
+            <label class="block text-[11px] font-bold text-slate-500">Har bir mahsulotdan nechta yorliq
+                <input type="number" id="qp-copies" min="1" max="50" value="1" oninput="updatePrintInfo()" class="mt-1 w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            </label>
+            <label class="flex items-center gap-2 text-xs font-semibold text-slate-600"><input type="checkbox" id="qp-byqty" onchange="updatePrintInfo()" class="w-4 h-4 accent-[#1f8a65]"> Ombordagi soni qancha bo'lsa, shuncha yorliq</label>
+            <div id="qp-info" class="text-xs font-bold text-[#1f8a65] bg-emerald-50 rounded-xl px-3.5 py-2.5"></div>
+            <p class="text-[11px] text-slate-400">Chop etish oynasida printeringizni tanlang, «Masshtab: 100%» va «Chekkalar: yo'q» qiling.</p>
+            <div class="flex justify-end gap-2 pt-1">
+                <button type="button" onclick="document.getElementById('qr-print-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Bekor</button>
+                <button type="button" onclick="printSelectedQr()" class="px-4 py-2 btn-teal rounded-xl text-xs font-bold"><i class="fa-solid fa-print mr-1"></i> Chop etish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-sm font-extrabold text-slate-800">Mahsulotni tahrirlash</h3>
+            <input type="hidden" id="e-id">
+            <input type="text" id="e-name" placeholder="Nomi" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            <select id="e-cat" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]"></select>
+            <select id="e-curr" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]"><option value="UZS">Kelish narxi: so'm</option><option value="USD">Kelish narxi: $</option></select>
+            <input type="number" step="any" id="e-buy" placeholder="Kelish narxi" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            <input type="number" step="any" id="e-sell" placeholder="Sotish narxi (so'm)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            <input type="number" min="0" id="e-qty" placeholder="Soni (qoldiq)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            <div class="flex justify-end gap-2 pt-1">
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Bekor</button>
+                <button onclick="saveEditProduct()" class="px-4 py-2 btn-teal rounded-xl text-xs font-bold">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Movement Modal -->
+    <div id="mv-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-sm font-extrabold text-slate-800">Harakatni tuzatish — <span id="mv-title"></span></h3>
+            <input type="hidden" id="mv-id">
+            <select id="mv-product" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></select>
+            <input type="date" id="mv-date" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+            <input type="number" min="1" id="mv-qty" placeholder="Soni" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+            <input type="number" step="any" id="mv-price" placeholder="Narxi (1 dona)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+            <select id="mv-payment" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"><option value="Naqd">Naqd so'm</option><option value="Plastik">Plastik karta</option><option value="Click">Click</option><option value="Payme">Payme</option><option value="Qarz">Nasiya (Qarzga)</option></select>
+            <input type="text" id="mv-customer" placeholder="Mijoz" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+            <input type="text" id="mv-note" placeholder="Izoh" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]">
+            <select id="mv-seller" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:bg-white focus:border-[#1f8a65]"></select>
+            <div class="flex justify-end gap-2 pt-1">
+                <button onclick="document.getElementById('mv-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Bekor</button>
+                <button onclick="saveEditMove()" class="px-4 py-2 btn-teal rounded-xl text-xs font-bold">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dollar Rate Modal -->
+    <div id="rate-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3.5 shadow-2xl">
+            <h3 class="text-sm font-extrabold text-slate-800">Dollar kursini belgilash ($1 = so'm)</h3>
+            <input type="number" id="rate-input" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-[#1f8a65]">
+            <div class="flex justify-end gap-2 pt-1">
+                <button onclick="document.getElementById('rate-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Bekor qilish</button>
+                <button onclick="saveRate()" class="px-4 py-2 btn-teal rounded-xl text-xs font-bold">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3.5 shadow-2xl">
+            <h3 class="text-sm font-extrabold text-slate-800">Parolni o'zgartirish</h3>
+            <input type="password" id="new-pass-input" placeholder="Yangi parol (kamida 6 belgi)" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1f8a65]">
+            <div class="flex justify-end gap-2 pt-1">
+                <button onclick="document.getElementById('password-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Yopish</button>
+                <button onclick="savePassword()" class="px-4 py-2 btn-teal rounded-xl text-xs font-bold">Yangilash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Database Modal -->
+    <div id="clear-modal" class="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl">
+            <h3 class="text-sm font-extrabold text-red-600">Barcha ma'lumotni o'chirish</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">Haqiqatan ham Mega Texno ombori, sotuvlar, qarzlar va xarajatlarni o'chirib tashlamoqchimisiz? (Xodimlar va Loginlar saqlanib qoladi)</p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="document.getElementById('clear-modal').classList.add('hidden')" class="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold">Bekor qilish</button>
+                <button onclick="confirmClearData()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold">Ha, o'chirilsin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-16 md:bottom-5 right-4 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl hidden"></div>
+
+    <div id="qr-print-area"></div>
+    <script>
+        const DB_KEY = 'MEGA_TEXNO_SKLAD_DB_V2';
+        const SESSION_KEY = 'MEGA_TEXNO_ACTIVE_USER_V2';
+
+        const initialData = {
+            exchangeRate: 12800,
+            staff: [
+                { id: 'u1', login: 'ADMIN63', pass: 'asadbek000m', role: 'Admin', blocked: false, isRoot: true },
+                { id: 'u2', login: 'xorinojnt123', pass: '123456', role: 'Admin', blocked: false, isRoot: false }
+            ],
+            categories: [],
+            products: [],
+            sales: [],
+            debts: [],
+            contacts: [],
+            expenses: []
+        };
+
+        const COLS = ['categories', 'products', 'sales', 'debts', 'contacts', 'expenses', 'staff'];
+        const CLOUD_ROOT = 'megatexno/v3';
+        const LEGACY_PATH = 'megatexno_sklad_data';
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCLb5G1CowJf5ZlaKHf_5yhDEXYvN2b8zM",
+            authDomain: "megatexno-8e999.firebaseapp.com",
+            databaseURL: "https://megatexno-8e999-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "megatexno-8e999",
+            storageBucket: "megatexno-8e999.firebasestorage.app",
+            messagingSenderId: "585565511901",
+            appId: "1:585565511901:web:4dd1ef0cd9ae84bb747b34"
+        };
+
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+        // Compact SHA-256 (parollar ochiq matn bo'lib saqlanmasligi uchun)
+        function sha256(s) {
+            const K = [], H = [];
+            const r = (v, n) => (v >>> n) | (v << (32 - n));
+            let p = 0, c = 2;
+            while (p < 64) { let pr = true; for (let i = 2; i * i <= c; i++) if (c % i === 0) { pr = false; break; }
+                if (pr) { K[p] = (Math.pow(c, 1 / 3) * 4294967296) | 0; if (p < 8) H[p] = (Math.pow(c, .5) * 4294967296) | 0; p++; } c++; }
+            const b = unescape(encodeURIComponent(s)); const w = []; let l = b.length * 8;
+            for (let i = 0; i < b.length; i++) w[i >> 2] |= b.charCodeAt(i) << (24 - (i % 4) * 8);
+            w[l >> 5] |= 0x80 << (24 - l % 32); w[(((l + 64) >> 9) << 4) + 15] = l;
+            for (let j = 0; j < w.length; j += 16) {
+                const a = H.slice(0), t = [];
+                for (let i = 0; i < 64; i++) {
+                    if (i < 16) t[i] = w[j + i] | 0;
+                    else { const x = t[i - 15], y = t[i - 2];
+                        t[i] = (t[i - 16] + (r(x, 7) ^ r(x, 18) ^ (x >>> 3)) + t[i - 7] + (r(y, 17) ^ r(y, 19) ^ (y >>> 10))) | 0; }
+                    const e = a[4], ch = (e & a[5]) ^ (~e & a[6]), mj = (a[0] & a[1]) ^ (a[0] & a[2]) ^ (a[1] & a[2]);
+                    const t1 = (a[7] + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ch + K[i] + t[i]) | 0;
+                    const t2 = ((r(a[0], 2) ^ r(a[0], 13) ^ r(a[0], 22)) + mj) | 0;
+                    a.unshift((t1 + t2) | 0); a[4] = (a[4] + t1) | 0; a.pop();
+                }
+                for (let i = 0; i < 8; i++) H[i] = (H[i] + a[i]) | 0;
+            }
+            return H.map(v => ('00000000' + (v >>> 0).toString(16)).slice(-8)).join('');
+        }
+        function hashPass(login, pass) { return sha256('mt|' + login.toLowerCase() + '|' + pass); }
+        function checkPass(st, pass) {
+            if (st.passHash) return st.passHash === hashPass(st.login, pass);
+            return st.pass === pass; // eski (ochiq) parol — kirgandan keyin avtomatik shifrlanadi
+        }
+
+        let db = loadDB();
+        ensureAdminAccount();
+        let currentUser = loadSession();
+        let rtdbRef = null;
+        let isCloudConnected = false;
+        let cloudReady = false;       // bulutdan birinchi ma'lumot kelgunча yozmaymiz
+        let lastSynced = snapshotOf(db); // bulutdagi oxirgi ma'lum holat (diff uchun)
+        let pushQueue = Promise.resolve();
+
+        function snapshotOf(d) {
+            const s = { exchangeRate: d.exchangeRate, catsSeeded: !!d.catsSeeded };
+            COLS.forEach(c => { s[c] = {}; (d[c] || []).forEach(x => { if (x && x.id) s[c][x.id] = JSON.parse(JSON.stringify(x)); }); });
+            return s;
+        }
+
+        function loadDB() {
+            try {
+                const raw = localStorage.getItem(DB_KEY);
+                if (!raw) return JSON.parse(JSON.stringify(initialData));
+                return Object.assign(JSON.parse(JSON.stringify(initialData)), JSON.parse(raw));
+            } catch (e) { return JSON.parse(JSON.stringify(initialData)); }
+        }
+
+        function catId(name) { return 'c_' + sha256('cat|' + name.toLowerCase()).slice(0, 10); }
+        function seedCategories() {
+            const have = new Set(db.categories.map(c => c.name.toLowerCase()));
+            const add = n => { n = (n || '').trim(); if (n && !have.has(n.toLowerCase())) { have.add(n.toLowerCase()); db.categories.push({ id: catId(n), name: n }); } };
+            db.products.forEach(p => add(p.category));
+            if (!db.catsSeeded) { ['Telefon', 'Konditsioner', 'Muzlatgich (Xolodilnik)', 'Gaz plita', 'Televizor', 'Stiralka'].forEach(add); db.catsSeeded = true; }
+        }
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+        function ensureAdminAccount() {
+            if (!Array.isArray(db.staff)) db.staff = [];
+            COLS.forEach(c => { if (!Array.isArray(db[c])) db[c] = []; });
+            seedCategories();
+            let adm = db.staff.find(s => s.isRoot) || db.staff.find(s => s.login && s.login.toUpperCase() === 'ADMIN63');
+            if (!adm) {
+                db.staff.unshift({ id: 'u1', login: 'ADMIN63', passHash: hashPass('ADMIN63', 'asadbek000m'), role: 'Admin', blocked: false, isRoot: true });
+            } else { adm.role = 'Admin'; adm.blocked = false; adm.isRoot = true; }
+            try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (e) {}
+        }
+
+        // Faqat o'zgargan maydonlarni yozadi → bir vaqtda ishlayotgan telefonlar bir-birini o'chirmaydi
+        function buildUpdates() {
+            const cur = snapshotOf(db), up = {}, inc = firebase.database.ServerValue.increment;
+            if (cur.exchangeRate !== lastSynced.exchangeRate) up['meta/exchangeRate'] = cur.exchangeRate;
+            if (cur.catsSeeded && !lastSynced.catsSeeded) up['meta/catsSeeded'] = true;
+            COLS.forEach(c => {
+                const o = lastSynced[c] || {}, n = cur[c];
+                Object.keys(o).forEach(id => { if (!n[id]) up[`${c}/${id}`] = null; });
+                Object.keys(n).forEach(id => {
+                    if (!o[id]) { up[`${c}/${id}`] = n[id]; return; }
+                    Object.keys(n[id]).forEach(f => {
+                        if (JSON.stringify(n[id][f]) === JSON.stringify(o[id][f])) return;
+                        if (c === 'products' && f === 'qty' && typeof n[id][f] === 'number' && typeof o[id][f] === 'number') up[`${c}/${id}/${f}`] = inc(n[id][f] - o[id][f]);
+                        else up[`${c}/${id}/${f}`] = n[id][f];
+                    });
+                    Object.keys(o[id]).forEach(f => { if (!(f in n[id])) up[`${c}/${id}/${f}`] = null; });
+                });
+            });
+            return { up, cur };
+        }
+
+        function saveDB() {
+            try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (e) {}
+            if (isCloudConnected && rtdbRef && cloudReady) {
+                const { up, cur } = buildUpdates();
+                if (Object.keys(up).length) {
+                    lastSynced = cur;
+                    rtdbRef.update(up).catch(err => {
+                        console.error('RTDB save error:', err);
+                        showToast("Bulutga saqlashda xatolik: " + (err.code || err.message));
+                    });
+                }
+            }
+            renderAll();
+        }
+
+        function fromCloud(v) {
+            const out = { exchangeRate: (v.meta && v.meta.exchangeRate) || db.exchangeRate, catsSeeded: !!(v.meta && v.meta.catsSeeded) };
+            COLS.forEach(c => { out[c] = Object.keys(v[c] || {}).map(id => Object.assign({ id }, v[c][id])); });
+            return out;
+        }
+
+        async function migrateLegacyIfNeeded(root) {
+            // Bulut bo'sh bo'lsa: avval eski blob'dan, bo'lmasa shu qurilmadagi ma'lumotdan to'ldiramiz
+            let src = null;
+            try {
+                const old = (await root.root.child(LEGACY_PATH).once('value')).val();
+                if (old) src = { exchangeRate: old.exchangeRate, ...Object.fromEntries(COLS.map(c => [c, Array.isArray(old[c]) ? old[c].filter(Boolean) : Object.values(old[c] || {})])) };
+            } catch (e) {}
+            if (!src) src = db;
+            const up = {}, s = snapshotOf(Object.assign({}, db, src));
+            COLS.forEach(c => Object.keys(s[c]).forEach(id => { up[`${c}/${id}`] = s[c][id]; }));
+            up['meta/exchangeRate'] = s.exchangeRate || 12800;
+            await root.update(up);
+        }
+
+        // ================= FIREBASE REALTIME DATABASE ENGINE =================
+        function initFirebaseRTDBSync() {
+            const config = DEFAULT_FIREBASE_CONFIG;
+            if (typeof firebase === 'undefined') return;
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(config);
+                const database = firebase.database();
+                rtdbRef = database.ref(CLOUD_ROOT);
+                isCloudConnected = true;
+
+                rtdbRef.on('value', async snap => {
+                    const v = snap.val();
+                    if (!v || !COLS.some(c => v[c])) {
+                        if (!cloudReady) { try { await migrateLegacyIfNeeded(rtdbRef); } catch (e) { console.error(e); showToast("Bulutni boshlashda xatolik: " + (e.code || e.message)); } cloudReady = true; }
+                        else { COLS.forEach(c => db[c] = []); lastSynced = snapshotOf(db); }
+                        if (cloudReady && v === null) return;
+                    }
+                    if (v) {
+                        const incoming = fromCloud(v);
+                        db = Object.assign(db, incoming);
+                        lastSynced = snapshotOf(incoming);
+                        ensureAdminAccount();
+                        cloudReady = true;
+                        // admin hisobi bulutda yo'q bo'lsa — qo'shamiz
+                        const { up, cur } = buildUpdates();
+                        if (Object.keys(up).length) { lastSynced = cur; rtdbRef.update(up); }
+                        try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (e) {}
+                        // bloklangan yoki o'chirilgan xodim darhol chiqarib yuboriladi
+                        if (currentUser) {
+                            const me = db.staff.find(s => s.login === currentUser.login);
+                            if (!me || me.blocked) logoutUser();
+                        }
+                        renderAll();
+                    }
+                }, error => {
+                    console.error("RTDB sync error:", error);
+                    showToast("Bulutga ulanib bo'lmadi: " + (error.code || error.message));
+                });
+            } catch (err) {
+                console.error("RTDB init failed:", err);
+            }
+        }
+
+        function loadSession() {
+            try {
+                const raw = localStorage.getItem(SESSION_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveSession(user) {
+            currentUser = user;
+            try {
+                if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+                else localStorage.removeItem(SESSION_KEY);
+            } catch (e) {}
+        }
+
+        function formatUZS(val) {
+            const n = Math.round(Number(val) || 0);
+            return n.toLocaleString('ru-RU') + " so'm";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2600);
+        }
+
+        function openMobileSidebar() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.remove('hidden');
+        }
+
+        function closeMobileSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-backdrop').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            const allTabs = ['bosh', 'ombor', 'ombor-add', 'harakat', 'qarz', 'kontakt', 'xarajat', 'hisobot', 'xodim'];
+            allTabs.forEach(t => {
+                const sec = document.getElementById('tab-' + t);
+                if (sec) sec.classList.toggle('hidden', t !== tabId);
+
+                const nav = document.getElementById('nav-' + t);
+                const on = t === tabId || (t === 'ombor' && tabId === 'ombor-add');
+                if (nav) nav.classList.toggle('active', on);
+
+                const mnav = document.getElementById('mnav-' + t);
+                if (mnav) {
+                    mnav.classList.toggle('text-[#1f8a65]', on);
+                    mnav.classList.toggle('font-bold', on);
+                }
+            });
+            closeMobileSidebar();
+            renderAll();
+        }
+
+        function toggleLoginPass() {
+            const inp = document.getElementById('login-password');
+            const eye = document.getElementById('login-eye');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                eye.className = 'fa-solid fa-eye-slash';
+            } else {
+                inp.type = 'password';
+                eye.className = 'fa-solid fa-eye';
+            }
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            const errBox = document.getElementById('login-error');
+            const errText = document.getElementById('login-error-text');
+
+            let found = db.staff.find(s => s.login.toLowerCase() === u.toLowerCase() && checkPass(s, p));
+            if (found && !found.passHash && !found.blocked) { found.passHash = hashPass(found.login, p); delete found.pass; saveDB(); }
+
+            if (!found) {
+                errText.textContent = "Login yoki parol noto'g'ri!";
+                errBox.classList.remove('hidden');
+                return;
+            }
+            if (found.blocked) {
+                errText.textContent = "Ushbu xodim profili bloklangan!";
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            errBox.classList.add('hidden');
+            saveSession({ login: found.login, role: found.role });
+            document.getElementById('login-screen').classList.add('hidden');
+            renderAll();
+            showToast(`Xush kelibsiz, ${found.login}!`);
+        });
+
+        function logoutUser() {
+            saveSession(null);
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function renderDashboard() {
+            document.getElementById('header-rate').textContent = db.exchangeRate;
+            if (currentUser) {
+                document.getElementById('header-user-info').textContent = `${currentUser.login} · ${currentUser.role}`;
+            }
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const monthPrefix = todayStr.slice(0, 7);
+
+            let totalSalesUZS = 0, todaySales = 0, monthSales = 0, monthProfit = 0;
+            const catMap = {};
+
+            db.sales.forEach(s => {
+                const amt = Number(s.totalUZS || 0);
+                const prof = Number(s.profitUZS || 0);
+                if (s.payment !== 'Qarz') {
+                    totalSalesUZS += amt;
+                }
+                if (s.date === todayStr) todaySales += amt;
+                if (s.date && s.date.startsWith(monthPrefix)) {
+                    monthSales += amt;
+                    monthProfit += prof;
+                    const c = s.category || 'Umumiy';
+                    catMap[c] = (catMap[c] || 0) + amt;
+                }
+            });
+
+            const totalExpenses = db.expenses.reduce((acc, x) => acc + Number(x.amount || 0), 0);
+            const netKassa = totalSalesUZS - totalExpenses;
+
+            let stockValueUZS = 0;
+            db.products.forEach(p => {
+                const unitBuyUZS = p.currency === 'USD' ? p.buyPrice * db.exchangeRate : p.buyPrice;
+                stockValueUZS += unitBuyUZS * Number(p.qty || 0);
+            });
+            const stockUSD = (stockValueUZS + netKassa) / (db.exchangeRate || 12800);
+
+            document.getElementById('dash-kassa-uzs').textContent = formatUZS(netKassa);
+            document.getElementById('dash-ombor-badge').textContent = `Jami aktiv: ≈ $${stockUSD.toFixed(1)} (Kurs: ${db.exchangeRate})`;
+
+            let custDebt = 0, ourDebt = 0;
+            db.debts.forEach(d => {
+                if (d.type === 'customer') custDebt += Number(d.amount || 0);
+                else ourDebt += Number(d.amount || 0);
+            });
+
+            document.getElementById('stat-today-sales').textContent = formatUZS(todaySales);
+            document.getElementById('stat-month-sales').textContent = formatUZS(monthSales);
+            document.getElementById('stat-month-profit').textContent = formatUZS(monthProfit - totalExpenses);
+            document.getElementById('stat-cust-debt').textContent = formatUZS(custDebt);
+            document.getElementById('stat-our-debt').textContent = formatUZS(ourDebt);
+
+            const barsEl = document.getElementById('chart-14-bars');
+            const labelsEl = document.getElementById('chart-14-labels');
+            barsEl.innerHTML = '';
+            labelsEl.innerHTML = '';
+
+            const days = [];
+            const now = new Date();
+            for (let i = 13; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - i);
+                const iso = d.toISOString().slice(0, 10);
+                days.push({ iso, label: d.getDate(), val: 0 });
+            }
+            db.sales.forEach(s => {
+                const f = days.find(x => x.iso === s.date);
+                if (f) f.val += Number(s.totalUZS || 0);
+            });
+            const maxVal = Math.max(...days.map(d => d.val), 1);
+
+            days.forEach((d, i) => {
+                const h = d.val > 0 ? Math.max(12, Math.round((d.val / maxVal) * 100)) : 4;
+                barsEl.innerHTML += `
+                    <div class="flex-1 flex flex-col items-center justify-end h-full">
+                        <div class="w-full max-w-[22px] rounded-t-md transition-all ${d.val > 0 ? 'bg-gradient-to-t from-[#156e4f] to-[#25a67a]' : 'bg-slate-100'}" style="height:${h}%" title="${formatUZS(d.val)}"></div>
+                    </div>
+                `;
+                if (i % 2 === 1) {
+                    labelsEl.innerHTML += `<span>${d.label}</span>`;
+                }
+            });
+
+            const catEl = document.getElementById('dash-categories');
+            const keys = Object.keys(catMap);
+            if (keys.length === 0) {
+                catEl.innerHTML = `<div class="py-6 text-center text-slate-400">Bu oyda sotuv yo'q</div>`;
+            } else {
+                catEl.innerHTML = keys.map(k => `
+                    <div class="flex justify-between items-center py-2 px-3 bg-slate-50 rounded-xl text-slate-700">
+                        <span class="font-semibold">${k}</span>
+                        <span class="font-extrabold text-slate-900">${formatUZS(catMap[k])}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function fillCatSelect(sel, extra, withAll) {
+            if (!sel) return;
+            const cur = sel.value;
+            const names = db.categories.map(c => c.name);
+            if (extra && !names.includes(extra)) names.push(extra);
+            sel.innerHTML = (withAll ? `<option value="">Barcha kategoriyalar</option>` : (sel.id === 'p-cat' ? `<option value="">Kategoriya tanlang...</option>` : '')) +
+                names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+            sel.value = extra || cur;
+            if (sel.value !== (extra || cur)) sel.value = '';
+        }
+
+        function renderOmbor() {
+            const q = (document.getElementById('ombor-search')?.value || '').toLowerCase();
+            const fc = document.getElementById('ombor-cat-filter');
+            fillCatSelect(document.getElementById('p-cat'));
+            fillCatSelect(fc, null, true);
+            const catF = fc ? fc.value : '';
+            const tbody = document.getElementById('ombor-tbody');
+            const sel = document.getElementById('s-product');
+
+            if (sel) {
+                const cur = sel.value;
+                sel.innerHTML = `<option value="">Ombordan mahsulot tanlang...</option>` +
+                    db.products.map(p => `<option value="${p.id}">${esc(p.name)} (${p.qty} dona) — ${formatUZS(p.sellPrice)}</option>`).join('');
+                sel.value = cur;
+            }
+
+            const st = document.getElementById('ombor-stats');
+            if (st) {
+                const qtyAll = db.products.reduce((a, p) => a + (p.qty || 0), 0);
+                const costAll = db.products.reduce((a, p) => a + (p.currency === 'USD' ? (p.buyPrice || 0) * db.exchangeRate : (p.buyPrice || 0)) * (p.qty || 0), 0);
+                const out = db.products.filter(p => !(p.qty > 0)).length;
+                const card = (t, v, sub, ic) => `<div class="stat-card p-4 shadow-2xs"><div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5"><i class="fa-solid ${ic} text-[#1f8a65]"></i>${t}</div><div class="text-xl font-black text-slate-900 mt-1">${v}</div><div class="text-[11px] text-slate-400 mt-0.5">${sub}</div></div>`;
+                st.innerHTML = card('Mahsulot turlari', db.products.length, out ? `Tugagan: ${out} ta` : 'Hammasi mavjud', 'fa-box-open') +
+                    card('Jami dona', qtyAll, 'omborda', 'fa-cubes') +
+                    card('Kategoriyalar', db.categories.length, 'ta kategoriya', 'fa-layer-group') +
+                    card('Ombor qiymati', formatUZS(costAll), 'kelish narxida', 'fa-coins');
+            }
+            const cl = document.getElementById('cat-list');
+            if (cl) cl.innerHTML = db.categories.map(c => {
+                const items = db.products.filter(p => p.category === c.name);
+                const dona = items.reduce((a, p) => a + (p.qty || 0), 0);
+                const act = catF === c.name;
+                return `<div class="flex items-center gap-1 pl-3 pr-1.5 py-1.5 rounded-xl text-xs font-bold border ${act ? 'bg-[#1f8a65] text-white border-[#1f8a65]' : 'bg-emerald-50 text-emerald-800 border-emerald-100'}">
+                    <button onclick="setCatFilterById('${c.id}')" class="text-left">${esc(c.name)} <span class="font-medium opacity-70">${items.length} tur · ${dona} dona</span></button>
+                    <button onclick="renameCategory('${c.id}')" title="Nomini o'zgartirish" class="p-1 hover:bg-black/10 rounded"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                    <button onclick="deleteCategory('${c.id}')" title="O'chirish" class="p-1 hover:bg-black/10 rounded"><i class="fa-solid fa-xmark text-[10px]"></i></button></div>`;
+            }).join('') || `<span class="text-xs text-slate-400">Kategoriya yo'q</span>`;
+
+            const list = db.products.filter(p => (!catF || p.category === catF) && ((p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)));
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Omborda mahsulot topilmadi</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(p => `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3 px-2 font-bold text-slate-800"><button type="button" onclick="openQrModal('${p.id}')" title="QR-kodni ko'rish" class="text-left hover:text-[#1f8a65] transition inline-flex items-center gap-1.5"><span class="underline decoration-dotted underline-offset-4">${esc(p.name)}</span><i class="fa-solid fa-qrcode text-[11px] text-slate-400"></i></button>${p.code ? `<span class="ml-1.5 text-[10px] text-slate-400 font-semibold">#${p.code}</span>` : ''}</td>
+                    <td class="py-3 px-2 text-slate-500"><span class="px-2.5 py-1 bg-slate-100 rounded-lg font-medium">${esc(p.category)}</span></td>
+                    <td class="py-3 px-2 font-medium">${p.currency === 'USD' ? '$' + p.buyPrice : formatUZS(p.buyPrice)}</td>
+                    <td class="py-3 px-2 font-extrabold text-[#1f8a65]">${formatUZS(p.sellPrice)}</td>
+                    <td class="py-3 px-2"><span class="px-2.5 py-1 ${p.qty > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'} rounded-lg font-bold">${p.qty} dona</span></td>
+                    <td class="py-3 px-2 text-right whitespace-nowrap">
+                        <button onclick="openEditProduct('${p.id}')" title="Tahrirlash" class="text-slate-500 hover:bg-slate-100 p-1.5 rounded-lg transition"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteProduct('${p.id}')" title="O'chirish" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        const MOVE_TYPES = {
+            sotuv: { label: 'Sotuv', sign: -1, cls: 'bg-emerald-50 text-emerald-700', btn: 'Sotish' },
+            brak: { label: 'Brak', sign: -1, cls: 'bg-red-50 text-red-600', btn: 'Brak qilish' },
+            vozvrat: { label: 'Vozvrat', sign: 1, cls: 'bg-amber-50 text-amber-700', btn: 'Vozvrat qabul qilish' },
+            qaytarish: { label: 'Yetkazuvchiga qaytarish', sign: -1, cls: 'bg-violet-50 text-violet-700', btn: 'Qaytarish' },
+            kirim: { label: 'Kirim', sign: 1, cls: 'bg-sky-50 text-sky-700', btn: 'Kirim qilish' },
+            tolov: { label: "Qarz to'lovi", sign: 0, cls: 'bg-teal-50 text-teal-700', btn: '' }
+        };
+        let moveType = 'sotuv';
+        const hasMoney = t => t === 'sotuv' || t === 'vozvrat';
+        const unitCost = p => p ? (p.currency === 'USD' ? (p.buyPrice || 0) * db.exchangeRate : (p.buyPrice || 0)) : 0;
+        function costOf(m) {
+            if (m.cost != null) return m.cost;
+            const pr = m.price != null ? m.price : (m.qty ? m.totalUZS / m.qty : 0);
+            return m.qty ? pr - (m.profitUZS || 0) / m.qty : 0;
+        }
+        function calcMove(t, price, qty, cost) {
+            if (t === 'sotuv') return { totalUZS: price * qty, profitUZS: (price - cost) * qty };
+            if (t === 'vozvrat') return { totalUZS: -price * qty, profitUZS: -(price - cost) * qty };
+            if (t === 'brak') return { totalUZS: 0, profitUZS: -cost * qty };
+            return { totalUZS: 0, profitUZS: 0 };
+        }
+
+        function setMoveType(t) {
+            moveType = t;
+            document.querySelectorAll('#m-types .mt-btn').forEach(b => {
+                const on = b.dataset.t === t;
+                b.classList.toggle('btn-teal', on);
+                b.classList.toggle('bg-slate-100', !on);
+                b.classList.toggle('text-slate-600', !on);
+            });
+            const m = hasMoney(t);
+            const price = document.getElementById('s-price');
+            price.style.display = m ? '' : 'none'; price.required = m;
+            const pay = document.getElementById('s-payment');
+            pay.style.display = m ? '' : 'none';
+            [...pay.options].forEach(o => { if (o.value === 'Qarz') o.hidden = o.disabled = (t === 'vozvrat'); });
+            if (t === 'vozvrat' && pay.value === 'Qarz') pay.value = 'Naqd';
+            document.getElementById('s-customer').style.display = m ? '' : 'none';
+            document.querySelector('#s-submit span').textContent = MOVE_TYPES[t].btn;
+            onSelectSaleProduct();
+        }
+
+        function renderHarakat() {
+            const ss = document.getElementById('s-seller');
+            const staffOpts = sel => db.staff.filter(x => !x.blocked).map(x => `<option value="${esc(x.login)}" ${x.login === sel ? 'selected' : ''}>${esc(x.login)}</option>`).join('');
+            if (ss) {
+                const cur = ss.value, me = currentUser && currentUser.login;
+                ss.innerHTML = staffOpts(me);
+                [...ss.options].forEach(o => o.textContent = 'Kim: ' + o.value);
+                if (cur && db.staff.some(x => x.login === cur)) ss.value = cur;
+            }
+            const f = document.getElementById('h-filter') ? document.getElementById('h-filter').value : '';
+            const rows = db.sales.slice().reverse().filter(x => !f || (x.type || 'sotuv') === f);
+            const tbody = document.getElementById('harakat-tbody');
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400">Harakatlar yo'q</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = rows.map(x => {
+                const t = x.type || 'sotuv', T = MOVE_TYPES[t] || MOVE_TYPES.sotuv;
+                const money = hasMoney(t) || t === 'tolov';
+                const sum = t === 'brak' ? `<span class="text-red-600">Zarar ${formatUZS(-(x.profitUZS || 0))}</span>` : (money ? formatUZS(x.totalUZS) : '—');
+                const pr = hasMoney(t) ? formatUZS(x.price != null ? x.price : (x.qty ? Math.abs(x.totalUZS) / x.qty : 0)) : '—';
+                return `<tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3 px-2 text-slate-400 font-medium whitespace-nowrap">${esc(x.date)}${x.time ? ' ' + esc(x.time) : ''}</td>
+                    <td class="py-3 px-2"><span class="px-2 py-1 rounded-lg font-bold whitespace-nowrap ${T.cls}">${T.label}</span></td>
+                    <td class="py-3 px-2 font-bold text-slate-800">${esc(x.name)}</td>
+                    <td class="py-3 px-2 text-slate-600">${esc(x.customer) || ''}${x.note ? `<div class="text-[11px] text-slate-400">${esc(x.note)}</div>` : (x.customer ? '' : '—')}</td>
+                    <td class="py-3 px-2 text-slate-600 font-medium">${esc(x.seller) || '—'}</td>
+                    <td class="py-3 px-2 font-semibold whitespace-nowrap">${T.sign > 0 ? '+' : T.sign < 0 ? '−' : ''}${x.qty} dona</td>
+                    <td class="py-3 px-2 font-medium whitespace-nowrap">${pr}</td>
+                    <td class="py-3 px-2 font-extrabold text-slate-900 whitespace-nowrap">${sum}</td>
+                    <td class="py-3 px-2">${money ? `<span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold">${esc(x.payment)}</span>` : '—'}</td>
+                    <td class="py-3 px-2 text-right whitespace-nowrap">
+                        ${t === 'tolov' ? '' : `<button onclick="openEditMove('${x.id}')" title="Tuzatish" class="text-slate-500 hover:bg-slate-100 p-1.5 rounded-lg transition"><i class="fa-solid fa-pen"></i></button>`}
+                        <button onclick="deleteSale('${x.id}')" title="O'chirish" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td></tr>`;
+            }).join('');
+        }
+
+        function setCatFilterById(id) {
+            const c = db.categories.find(x => x.id === id), fc = document.getElementById('ombor-cat-filter');
+            if (!c || !fc) return;
+            fc.value = fc.value === c.name ? '' : c.name;
+            renderOmbor();
+        }
+
+        function addCategory(inputId, select) {
+            const el = document.getElementById(inputId || 'cat-new'), n = el.value.trim();
+            if (!n) return;
+            if (db.categories.some(c => c.name.toLowerCase() === n.toLowerCase())) { showToast("Bunday kategoriya bor"); return; }
+            db.categories.push({ id: catId(n), name: n });
+            el.value = '';
+            saveDB();
+            if (select) document.getElementById('p-cat').value = n;
+            showToast("Kategoriya qo'shildi");
+        }
+
+        function renameCategory(id) {
+            const c = db.categories.find(x => x.id === id); if (!c) return;
+            const n = (prompt("Yangi nomi:", c.name) || '').trim();
+            if (!n || n === c.name) return;
+            if (db.categories.some(x => x.id !== id && x.name.toLowerCase() === n.toLowerCase())) { showToast("Bunday kategoriya bor"); return; }
+            db.products.forEach(p => { if (p.category === c.name) p.category = n; });
+            c.name = n;
+            saveDB();
+            showToast("Kategoriya o'zgartirildi");
+        }
+
+        function deleteCategory(id) {
+            const c = db.categories.find(x => x.id === id); if (!c) return;
+            const n = db.products.filter(p => p.category === c.name).length;
+            if (n) { showToast(`Bu kategoriyada ${n} ta mahsulot bor — avval ularni boshqa kategoriyaga o'tkazing`); return; }
+            db.categories = db.categories.filter(x => x.id !== id);
+            saveDB();
+        }
+
+        function openEditProduct(id) {
+            const p = db.products.find(x => x.id === id); if (!p) return;
+            document.getElementById('e-id').value = id;
+            document.getElementById('e-name').value = p.name;
+            fillCatSelect(document.getElementById('e-cat'), p.category);
+            document.getElementById('e-curr').value = p.currency || 'UZS';
+            document.getElementById('e-buy').value = p.buyPrice;
+            document.getElementById('e-sell').value = p.sellPrice;
+            document.getElementById('e-qty').value = p.qty;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function saveEditProduct() {
+            const p = db.products.find(x => x.id === document.getElementById('e-id').value); if (!p) return;
+            const name = document.getElementById('e-name').value.trim();
+            if (!name) { showToast("Nomi bo'sh bo'lmasin"); return; }
+            p.name = name;
+            p.category = document.getElementById('e-cat').value;
+            p.currency = document.getElementById('e-curr').value;
+            p.buyPrice = parseFloat(document.getElementById('e-buy').value) || 0;
+            p.sellPrice = parseFloat(document.getElementById('e-sell').value) || 0;
+            p.qty = Math.max(0, parseInt(document.getElementById('e-qty').value) || 0);
+            document.getElementById('edit-modal').classList.add('hidden');
+            saveDB();
+            showToast("Mahsulot yangilandi");
+        }
+
+        function renderQarz() {
+            const box = document.getElementById('qarz-list');
+            if (db.debts.length === 0) {
+                box.innerHTML = `<div class="text-slate-400 py-6 text-center">Faol qarzlar yo'q</div>`;
+                return;
+            }
+            box.innerHTML = db.debts.map(d => `
+                <div class="flex flex-wrap items-center justify-between gap-2 p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-xl">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-md ${d.type === 'customer' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700'}">
+                            ${d.type === 'customer' ? 'Mijoz qarzi' : 'Bizning qarzimiz'}
+                        </span>
+                        <div class="font-extrabold text-slate-800 mt-1.5">${d.person}</div>
+                        <div class="text-slate-400 text-[11px]">${d.note || ''}</div>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="font-extrabold text-sm text-slate-900">${formatUZS(d.amount)}</span>
+                        <button onclick="closeDebt('${d.id}')" class="px-3.5 py-2 btn-teal rounded-xl font-bold text-xs">
+                            To'landi
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderKontakt() {
+            const box = document.getElementById('contact-list');
+            if (db.contacts.length === 0) {
+                box.innerHTML = `<div class="text-slate-400 py-6 text-center">Kontaktlar kiritilmagan</div>`;
+                return;
+            }
+            box.innerHTML = db.contacts.map(c => `
+                <div class="py-3.5 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-800">${c.name}</div>
+                        <div class="text-[11px] text-slate-400 font-medium">${c.role}</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="tel:${c.phone}" class="text-[#1f8a65] font-extrabold">${c.phone}</a>
+                        <button onclick="deleteContact('${c.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderXarajat() {
+            const box = document.getElementById('expense-list');
+            if (db.expenses.length === 0) {
+                box.innerHTML = `<div class="text-slate-400 py-6 text-center">Xarajatlar kiritilmagan</div>`;
+                return;
+            }
+            box.innerHTML = db.expenses.slice().reverse().map(e => `
+                <div class="py-3.5 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-slate-800">${e.title}</div>
+                        <div class="text-[11px] text-slate-400 font-medium">${e.date} · ${e.method}</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-red-600">-${formatUZS(e.amount)}</span>
+                        <button onclick="deleteExpense('${e.id}')" class="text-slate-400 hover:text-red-600 p-1.5"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        let repPeriod = 'month';
+        const REP_PERIODS = [['today', 'Bugun'], ['week', '7 kun'], ['month', 'Shu oy'], ['all', 'Hammasi']];
+        function setRepPeriod(p) { repPeriod = p; renderHisobot(); }
+        function inPeriod(date) {
+            if (repPeriod === 'all') return true;
+            const d = date || '', today = new Date().toISOString().slice(0, 10);
+            if (repPeriod === 'today') return d === today;
+            if (repPeriod === 'month') return d.startsWith(today.slice(0, 7));
+            const from = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+            return d >= from && d <= today;
+        }
+        function barRows(map, color, unit) {
+            const rows = Object.entries(map).filter(([, v]) => v).sort((a, b) => b[1] - a[1]);
+            if (!rows.length) return `<div class="text-xs text-slate-400 py-2">Ma'lumot yo'q</div>`;
+            const max = Math.max(...rows.map(r => Math.abs(r[1])), 1), tot = rows.reduce((a, r) => a + Math.abs(r[1]), 0) || 1;
+            return rows.map(([k, v]) => `<div>
+                <div class="flex justify-between items-baseline text-xs mb-1"><span class="font-bold text-slate-700 truncate pr-2">${esc(k)}</span><span class="font-extrabold text-slate-900 whitespace-nowrap">${unit ? v + ' ' + unit : formatUZS(v)} <span class="text-slate-400 font-medium">${Math.round(Math.abs(v) / tot * 100)}%</span></span></div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full ${color}" style="width:${Math.max(3, Math.abs(v) / max * 100)}%"></div></div></div>`).join('');
+        }
+
+        function renderHisobot() {
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            document.getElementById('rep-period').innerHTML = REP_PERIODS.map(([k, l]) =>
+                `<button onclick="setRepPeriod('${k}')" class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap ${repPeriod === k ? 'btn-teal' : 'bg-white border border-slate-200 text-slate-600'}">${l}</button>`).join('');
+            set('rep-period-label', '· ' + REP_PERIODS.find(x => x[0] === repPeriod)[1].toLowerCase());
+
+            const methods = { Naqd: 0, Plastik: 0, Click: 0, Payme: 0 }, cats = {}, sellers = {}, prods = {};
+            let revenue = 0, gross = 0, count = 0, brakLoss = 0, brakQty = 0, vozQty = 0, vozSum = 0, qaytQty = 0, kirimQty = 0;
+            db.sales.filter(x => inPeriod(x.date)).forEach(x => {
+                const t = x.type || 'sotuv', amt = Number(x.totalUZS || 0), q = Number(x.qty || 0);
+                gross += Number(x.profitUZS || 0);
+                if (x.payment !== 'Qarz') { revenue += amt; if (x.payment in methods) methods[x.payment] += amt; }
+                if (t === 'sotuv') { count++; sellers[x.seller || "Noma'lum"] = (sellers[x.seller || "Noma'lum"] || 0) + amt; prods[x.name] = (prods[x.name] || 0) + q; }
+                if (t === 'sotuv' || t === 'vozvrat') cats[x.category || 'Boshqa'] = (cats[x.category || 'Boshqa'] || 0) + amt;
+                if (t === 'vozvrat') { prods[x.name] = (prods[x.name] || 0) - q; vozQty += q; vozSum += -amt; }
+                if (t === 'brak') { brakQty += q; brakLoss += -Number(x.profitUZS || 0); }
+                if (t === 'qaytarish') qaytQty += q;
+                if (t === 'kirim') kirimQty += q;
+            });
+            const exp = db.expenses.filter(x => inPeriod(x.date)).reduce((a, b) => a + Number(b.amount || 0), 0);
+            const stockVal = db.products.reduce((a, p) => a + unitCost(p) * Number(p.qty || 0), 0);
+            const debtIn = db.debts.filter(d => d.type === 'customer').reduce((a, d) => a + Number(d.amount || 0), 0);
+            const debtOut = db.debts.filter(d => d.type !== 'customer').reduce((a, d) => a + Number(d.amount || 0), 0);
+
+            const net = gross - exp, pe = document.getElementById('rep-profit');
+            pe.textContent = formatUZS(net); pe.classList.toggle('text-red-300', net < 0);
+            set('rep-sales', formatUZS(revenue)); set('rep-gross', formatUZS(gross)); set('rep-expenses', formatUZS(exp));
+            set('rep-count', count + ' ta'); set('rep-stock-val', formatUZS(stockVal));
+            set('rep-debt-in', formatUZS(debtIn)); set('rep-debt-out', formatUZS(debtOut));
+            document.getElementById('rep-methods').innerHTML = barRows(methods, 'bg-[#1f8a65]');
+            document.getElementById('rep-cats').innerHTML = barRows(cats, 'bg-indigo-500');
+            document.getElementById('rep-sellers').innerHTML = barRows(sellers, 'bg-amber-500');
+            const top = Object.fromEntries(Object.entries(prods).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 5));
+            document.getElementById('rep-top').innerHTML = barRows(top, 'bg-rose-500', 'dona');
+            const mv = (t, v, sub, cls) => `<div class="p-3 rounded-xl border border-slate-200/80 bg-slate-50"><div class="text-[11px] font-bold ${cls}">${t}</div><div class="text-sm font-extrabold text-slate-900 mt-1">${v}</div><div class="text-[11px] text-slate-400">${sub}</div></div>`;
+            document.getElementById('rep-moves').innerHTML =
+                mv('Brak', brakQty + ' dona', 'Zarar: ' + formatUZS(brakLoss), 'text-red-600') +
+                mv('Vozvrat', vozQty + ' dona', formatUZS(vozSum), 'text-amber-600') +
+                mv('Yetkazuvchiga', qaytQty + ' dona', 'qaytarilgan', 'text-violet-600') +
+                mv('Kirim', kirimQty + ' dona', 'omborga', 'text-sky-600');
+        }
+
+        function renderStaff() {
+            const box = document.getElementById('staff-list');
+            const total = db.staff.length, blocked = db.staff.filter(x => x.blocked).length;
+            const stc = (t, v, cls) => `<div class="stat-card p-3.5 shadow-2xs text-center"><div class="text-xl font-black ${cls}">${v}</div><div class="text-[11px] text-slate-400 font-semibold mt-0.5">${t}</div></div>`;
+            document.getElementById('staff-stats').innerHTML = stc('Jami', total, 'text-slate-900') + stc('Faol', total - blocked, 'text-emerald-600') + stc('Bloklangan', blocked, 'text-red-500');
+            const colors = ['bg-emerald-100 text-emerald-700', 'bg-indigo-100 text-indigo-700', 'bg-amber-100 text-amber-700', 'bg-rose-100 text-rose-700', 'bg-sky-100 text-sky-700', 'bg-violet-100 text-violet-700'];
+            box.innerHTML = db.staff.map((st, i) => {
+                const mine = db.sales.filter(x => (x.type || 'sotuv') === 'sotuv' && x.seller === st.login);
+                const sum = mine.reduce((a, x) => a + Number(x.totalUZS || 0), 0);
+                const isMe = currentUser && currentUser.login === st.login;
+                return `<div class="p-3.5 border border-slate-200/80 rounded-2xl ${st.blocked ? 'bg-red-50/40' : 'bg-slate-50/50'}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl ${colors[i % colors.length]} flex items-center justify-center font-black text-base shrink-0">${esc(st.login.slice(0, 1).toUpperCase())}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-extrabold text-slate-800 truncate">${esc(st.login)}${isMe ? ' <span class="text-[10px] font-bold text-slate-400">(siz)</span>' : ''}</div>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded-md font-bold ${st.role === 'Admin' ? 'bg-violet-100 text-violet-700' : 'bg-slate-200/70 text-slate-600'}">${esc(st.role)}</span>
+                                ${st.isRoot ? '<span class="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md font-bold">Asosiy</span>' : ''}
+                                ${st.blocked ? '<span class="text-[10px] px-2 py-0.5 bg-red-100 text-red-600 rounded-md font-bold">Bloklangan</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0"><div class="text-[11px] text-slate-400 font-semibold">${mine.length} ta sotuv</div><div class="text-xs font-extrabold text-slate-800">${formatUZS(sum)}</div></div>
+                    </div>
+                    ${st.isRoot ? '' : `<div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200/70">
+                        <button onclick="resetStaffPass('${st.id}')" class="flex-1 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700"><i class="fa-solid fa-key text-amber-500 mr-1"></i> Parol</button>
+                        <button onclick="toggleStaffBlock('${st.id}')" class="flex-1 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700">${st.blocked ? '<i class="fa-solid fa-lock-open mr-1"></i> Faollashtirish' : '<i class="fa-solid fa-ban mr-1"></i> Bloklash'}</button>
+                        <button onclick="removeStaff('${st.id}')" title="Xodimni o'chirish" class="px-3.5 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-semibold"><i class="fa-solid fa-user-minus"></i></button>
+                    </div>`}
+                </div>`;
+            }).join('');
+        }
+
+        function resetStaffPass(id) {
+            const st = db.staff.find(x => x.id === id); if (!st) return;
+            const np = prompt(`${st.login} uchun yangi parol (kamida 6 belgi):`);
+            if (np === null) return;
+            if (np.length < 6) { showToast("Parol kamida 6 belgi bo'lsin"); return; }
+            st.passHash = hashPass(st.login, np); delete st.pass;
+            saveDB();
+            showToast("Parol yangilandi");
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderOmbor();
+            renderHarakat();
+            renderQarz();
+            renderKontakt();
+            renderXarajat();
+            renderHisobot();
+            renderStaff();
+        }
+
+        document.getElementById('ombor-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.products.push({
+                id: 'p_' + uid(),
+                code: nextProductCode(),
+                name: document.getElementById('p-name').value.trim(),
+                category: document.getElementById('p-cat').value,
+                currency: document.getElementById('p-curr').value,
+                buyPrice: parseFloat(document.getElementById('p-buy').value) || 0,
+                sellPrice: parseFloat(document.getElementById('p-sell').value) || 0,
+                qty: parseInt(document.getElementById('p-qty').value) || 0
+            });
+            this.reset();
+            saveDB();
+            showToast("Mahsulot omborga qo'shildi! Yana qo'shishingiz mumkin.");
+        });
+
+        function deleteProduct(id) {
+            db.products = db.products.filter(p => p.id !== id);
+            saveDB();
+            showToast("Mahsulot o'chirildi");
+        }
+
+        function onSelectSaleProduct() {
+            if (!hasMoney(moveType)) return;
+            const id = document.getElementById('s-product').value;
+            const p = db.products.find(x => x.id === id);
+            if (p) document.getElementById('s-price').value = p.sellPrice;
+        }
+
+        document.getElementById('sale-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const t = moveType, T = MOVE_TYPES[t];
+            const prod = db.products.find(x => x.id === document.getElementById('s-product').value);
+            if (!prod) return;
+            const qty = parseInt(document.getElementById('s-qty').value) || 1;
+            const price = hasMoney(t) ? (parseFloat(document.getElementById('s-price').value) || prod.sellPrice || 0) : 0;
+            const payment = hasMoney(t) ? document.getElementById('s-payment').value : 'Naqd';
+            const customer = hasMoney(t) ? document.getElementById('s-customer').value.trim() : '';
+            if (T.sign < 0 && qty > prod.qty && !confirm(`Omborda faqat ${prod.qty} dona bor. Baribir davom etasizmi?`)) return;
+
+            const cost = unitCost(prod), c = calcMove(t, price, qty, cost);
+            prod.qty = Math.max(0, prod.qty + T.sign * qty);
+            const id = 's_' + uid();
+            const rec = {
+                id, type: t, productId: prod.id, name: prod.name, category: prod.category,
+                qty, price, cost, totalUZS: c.totalUZS, profitUZS: c.profitUZS, payment, customer,
+                note: document.getElementById('s-note').value.trim(),
+                seller: document.getElementById('s-seller').value || (currentUser && currentUser.login) || '',
+                date: new Date().toISOString().slice(0, 10),
+                time: new Date().toTimeString().slice(0, 5)
+            };
+            if (t === 'sotuv' && payment === 'Qarz') {
+                rec.debtId = 'd_' + uid();
+                db.debts.push({ id: rec.debtId, type: 'customer', person: customer || 'Nasiya mijoz', amount: c.totalUZS, note: `${prod.name} (${qty} dona)` });
+            }
+            db.sales.push(rec);
+            this.reset();
+            saveDB();
+            showToast(T.label + ' saqlandi!');
+        });
+
+        function deleteSale(id) {
+            const sl = db.sales.find(x => x.id === id); if (!sl) return;
+            const T = MOVE_TYPES[sl.type || 'sotuv'] || MOVE_TYPES.sotuv;
+            const prod = sl.productId && T.sign ? db.products.find(x => x.id === sl.productId) : null;
+            if (!confirm("O'chirilsinmi?" + (prod ? " Ombor qoldig'i qayta tiklanadi." : ""))) return;
+            if (prod) prod.qty = Math.max(0, prod.qty - T.sign * sl.qty);
+            if (sl.debtId) db.debts = db.debts.filter(d => d.id !== sl.debtId);
+            db.sales = db.sales.filter(s => s.id !== id);
+            saveDB();
+            showToast("O'chirildi");
+        }
+
+        function openEditMove(id) {
+            const m = db.sales.find(x => x.id === id); if (!m) return;
+            const t = m.type || 'sotuv', money = hasMoney(t);
+            document.getElementById('mv-id').value = id;
+            document.getElementById('mv-title').textContent = MOVE_TYPES[t].label;
+            const ps = document.getElementById('mv-product');
+            ps.innerHTML = db.products.map(p => `<option value="${p.id}">${esc(p.name)} (${p.qty} dona)</option>`).join('');
+            if (!db.products.some(p => p.id === m.productId)) ps.insertAdjacentHTML('afterbegin', `<option value="">${esc(m.name)}</option>`);
+            ps.value = m.productId || '';
+            document.getElementById('mv-date').value = m.date || '';
+            document.getElementById('mv-qty').value = m.qty;
+            const pr = document.getElementById('mv-price'); pr.value = m.price != null ? m.price : (m.qty ? Math.abs(m.totalUZS) / m.qty : 0); pr.style.display = money ? '' : 'none';
+            const py = document.getElementById('mv-payment'); py.value = m.payment || 'Naqd'; py.style.display = money ? '' : 'none';
+            const cu = document.getElementById('mv-customer'); cu.value = m.customer || ''; cu.style.display = money ? '' : 'none';
+            document.getElementById('mv-note').value = m.note || '';
+            const sl = document.getElementById('mv-seller');
+            sl.innerHTML = db.staff.map(x => `<option value="${esc(x.login)}">Kim: ${esc(x.login)}</option>`).join('');
+            sl.value = m.seller || '';
+            document.getElementById('mv-modal').classList.remove('hidden');
+        }
+
+        function saveEditMove() {
+            const m = db.sales.find(x => x.id === document.getElementById('mv-id').value); if (!m) return;
+            const t = m.type || 'sotuv', T = MOVE_TYPES[t];
+            const oldP = db.products.find(x => x.id === m.productId);
+            const newP = db.products.find(x => x.id === document.getElementById('mv-product').value) || oldP;
+            const qty = Math.max(1, parseInt(document.getElementById('mv-qty').value) || 1);
+            const price = hasMoney(t) ? (parseFloat(document.getElementById('mv-price').value) || 0) : 0;
+            const cost = newP && newP !== oldP ? unitCost(newP) : costOf(m);
+            if (oldP) oldP.qty = Math.max(0, oldP.qty - T.sign * m.qty);
+            if (newP) newP.qty = Math.max(0, newP.qty + T.sign * qty);
+            const c = calcMove(t, price, qty, cost);
+            const payment = hasMoney(t) ? document.getElementById('mv-payment').value : 'Naqd';
+            const customer = hasMoney(t) ? document.getElementById('mv-customer').value.trim() : '';
+            Object.assign(m, {
+                productId: newP ? newP.id : m.productId, name: newP ? newP.name : m.name, category: newP ? newP.category : m.category,
+                qty, price, cost, totalUZS: c.totalUZS, profitUZS: c.profitUZS, payment, customer,
+                note: document.getElementById('mv-note').value.trim(),
+                seller: document.getElementById('mv-seller').value,
+                date: document.getElementById('mv-date').value || m.date
+            });
+            if (t === 'sotuv') {
+                const d = db.debts.find(x => x.id === m.debtId);
+                if (payment === 'Qarz') {
+                    if (d) { d.amount = c.totalUZS; d.person = customer || 'Nasiya mijoz'; d.note = `${m.name} (${qty} dona)`; }
+                    else if (!m.debtId) { m.debtId = 'd_' + uid(); db.debts.push({ id: m.debtId, type: 'customer', person: customer || 'Nasiya mijoz', amount: c.totalUZS, note: `${m.name} (${qty} dona)` }); }
+                } else if (m.debtId) { db.debts = db.debts.filter(x => x.id !== m.debtId); delete m.debtId; }
+            }
+            document.getElementById('mv-modal').classList.add('hidden');
+            saveDB();
+            showToast("Tuzatildi");
+        }
+
+        document.getElementById('debt-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.debts.push({
+                id: 'd_' + uid(),
+                type: document.getElementById('d-type').value,
+                person: document.getElementById('d-person').value.trim(),
+                amount: parseFloat(document.getElementById('d-amount').value) || 0,
+                note: document.getElementById('d-note').value.trim()
+            });
+            this.reset();
+            saveDB();
+            showToast("Qarz saqlandi");
+        });
+
+        function closeDebt(id) {
+            const d = db.debts.find(x => x.id === id);
+            if (d && d.type === 'customer') {
+                db.sales.push({
+                    id: 's_' + uid(),
+                    name: "Qarz to'lovi: " + d.person,
+                    category: "Qarz to'lovi",
+                    type: 'tolov',
+                    qty: 1,
+                    totalUZS: d.amount,
+                    profitUZS: 0,
+                    payment: 'Naqd',
+                    customer: d.person,
+                    date: new Date().toISOString().slice(0, 10)
+                });
+            }
+            db.debts = db.debts.filter(x => x.id !== id);
+            saveDB();
+            showToast("Qarz yopildi!");
+        }
+
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.contacts.push({
+                id: 'c_' + uid(),
+                name: document.getElementById('c-name').value.trim(),
+                phone: document.getElementById('c-phone').value.trim(),
+                role: document.getElementById('c-role').value
+            });
+            this.reset();
+            saveDB();
+            showToast("Kontakt saqlandi");
+        });
+
+        function deleteContact(id) {
+            db.contacts = db.contacts.filter(c => c.id !== id);
+            saveDB();
+        }
+
+        document.getElementById('expense-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            db.expenses.push({
+                id: 'e_' + uid(),
+                title: document.getElementById('e-title').value.trim(),
+                amount: parseFloat(document.getElementById('e-amount').value) || 0,
+                method: document.getElementById('e-method').value,
+                date: new Date().toISOString().slice(0, 10)
+            });
+            this.reset();
+            saveDB();
+            showToast("Xarajat yozildi");
+        });
+
+        function deleteExpense(id) {
+            db.expenses = db.expenses.filter(e => e.id !== id);
+            saveDB();
+        }
+
+        document.getElementById('staff-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const login = document.getElementById('st-login').value.trim();
+            const pass = document.getElementById('st-pass').value;
+            const role = document.getElementById('st-role').value;
+
+            if (db.staff.some(s => s.login.toLowerCase() === login.toLowerCase())) {
+                showToast("Bu login band!");
+                return;
+            }
+
+            db.staff.push({
+                id: 'u_' + uid(),
+                login,
+                passHash: hashPass(login, pass),
+                role,
+                blocked: false,
+                isRoot: false
+            });
+            this.reset();
+            saveDB();
+            showToast("Yangi xodim qo'shildi!");
+        });
+
+        function toggleStaffBlock(id) {
+            const st = db.staff.find(x => x.id === id);
+            if (st && !st.isRoot) {
+                st.blocked = !st.blocked;
+                saveDB();
+                showToast(st.blocked ? "Xodim bloklandi" : "Xodim faollashtirildi");
+            }
+        }
+
+        function removeStaff(id) {
+            db.staff = db.staff.filter(x => x.id !== id || x.isRoot);
+            saveDB();
+            showToast("Xodim tizimdan o'chirildi");
+        }
+
+        function openRateModal() {
+            document.getElementById('rate-input').value = db.exchangeRate;
+            document.getElementById('rate-modal').classList.remove('hidden');
+        }
+
+        function saveRate() {
+            const val = parseFloat(document.getElementById('rate-input').value);
+            if (val > 0) {
+                db.exchangeRate = val;
+                saveDB();
+                showToast("Kurs yangilandi!");
+            }
+            document.getElementById('rate-modal').classList.add('hidden');
+        }
+
+        function openPasswordModal() {
+            document.getElementById('new-pass-input').value = '';
+            document.getElementById('password-modal').classList.remove('hidden');
+        }
+
+        function savePassword() {
+            const np = document.getElementById('new-pass-input').value;
+            if (np.length < 6) {
+                showToast("Parol kamida 6 belgi bo'lishi shart!");
+                return;
+            }
+            if (currentUser) {
+                const st = db.staff.find(s => s.login === currentUser.login);
+                if (st) { st.passHash = hashPass(st.login, np); delete st.pass; }
+                saveDB();
+                showToast("Parol yangilandi!");
+            }
+            document.getElementById('password-modal').classList.add('hidden');
+        }
+
+        function openClearModal() {
+            document.getElementById('clear-modal').classList.remove('hidden');
+        }
+
+        function confirmClearData() {
+            db.products = [];
+            db.sales = [];
+            db.debts = [];
+            db.contacts = [];
+            db.expenses = [];
+            saveDB();
+            document.getElementById('clear-modal').classList.add('hidden');
+            showToast("Barcha ma'lumotlar tozalandi!");
+        }
+
+
+        // =====================================================
+        //  QR TIZIMI v2: yorliq · yuklab olish · chop etish · skaner
+        // =====================================================
+        const QR_PREFIX = 'MT:';
+        const qrPayload = p => QR_PREFIX + p.id;
+
+        // kutubxona yuklanmasa — zaxira manzildan yuklash
+        function loadScriptOnce(url) {
+            return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = url; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+        }
+        async function ensureLib(test, urls) {
+            if (test()) return true;
+            for (const u of urls) { try { await loadScriptOnce(u); if (test()) return true; } catch (e) {} }
+            return false;
+        }
+        const LIB_QRGEN = ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'];
+        const LIB_JSQR = ['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'];
+        ensureLib(() => typeof qrcode !== 'undefined', LIB_QRGEN);
+        ensureLib(() => typeof jsQR !== 'undefined', LIB_JSQR);
+
+        // ---- mahsulot raqami (yorliqdagi katta raqam: 1001, 1002...) ----
+        function nextProductCode() { return db.products.reduce((m, p) => Math.max(m, parseInt(p.code) || 0), 1000) + 1; }
+        function ensureCodes() {
+            let ch = false;
+            db.products.forEach(p => { if (!p.code) { p.code = nextProductCode(); ch = true; } });
+            if (ch) saveDB();
+        }
+
+        // ---- QR rasm ----
+        function qrToCanvas(text, size) {
+            const qr = qrcode(0, 'M');
+            qr.addData(text, 'Byte');
+            qr.make();
+            const n = qr.getModuleCount(), quiet = 3;
+            const mod = Math.max(2, Math.floor(size / (n + quiet * 2)));
+            const px = mod * (n + quiet * 2);
+            const c = document.createElement('canvas');
+            c.width = c.height = px;
+            const g = c.getContext('2d');
+            g.fillStyle = '#fff'; g.fillRect(0, 0, px, px);
+            g.fillStyle = '#000';
+            for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+                if (qr.isDark(r, k)) g.fillRect((k + quiet) * mod, (r + quiet) * mod, mod, mod);
+            }
+            return c;
+        }
+
+        const FONT = 'Arial, Helvetica, sans-serif';
+        function fitText(g, text, maxW, startPx, minPx, weight) {
+            let fs = Math.max(minPx, startPx);
+            g.font = `${weight} ${fs}px ${FONT}`;
+            while (g.measureText(text).width > maxW && fs > minPx) { fs -= 1; g.font = `${weight} ${fs}px ${FONT}`; }
+            if (g.measureText(text).width > maxW) {
+                let t = text;
+                while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+                text = t + '…';
+            }
+            return { text, fs };
+        }
+        const todayStr = () => new Date().toLocaleDateString('ru-RU');
+
+        // Yorliq: tepada nomi, chiziq, chapda katta raqam + sana, o'ngda QR
+        function labelCanvas(p, w, h, ppm) {
+            ppm = ppm || 16;
+            const W = Math.round(w * ppm), H = Math.round(h * ppm);
+            const c = document.createElement('canvas'); c.width = W; c.height = H;
+            const g = c.getContext('2d');
+            g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+            g.fillStyle = '#000'; g.textBaseline = 'middle'; g.textAlign = 'left';
+            const pad = Math.min(2.2, w * 0.045) * ppm;
+            const headH = h * 0.2 * ppm, headTop = pad * 0.6;
+            const nm = fitText(g, p.name || '', W - 2 * pad, headH * 0.62, headH * 0.34, '600');
+            g.font = `600 ${nm.fs}px ${FONT}`;
+            g.fillText(nm.text, pad, headTop + headH / 2);
+            const ruleY = headTop + headH + 0.4 * ppm, ruleH = Math.max(2, Math.round(0.3 * ppm));
+            g.fillRect(pad, ruleY, W - 2 * pad, ruleH);
+            const bodyTop = ruleY + ruleH + 0.8 * ppm, bodyBot = H - pad * 0.7, bodyH = bodyBot - bodyTop;
+            const qc = qrToCanvas(qrPayload(p), Math.min(bodyH, W * 0.5));
+            const qrX = W - pad * 0.5 - qc.width;
+            g.imageSmoothingEnabled = false;
+            g.drawImage(qc, qrX, bodyTop + (bodyH - qc.height) / 2);
+            const leftW = qrX - pad - 0.5 * ppm;
+            const code = String(p.code || '');
+            const cf = fitText(g, code, leftW, bodyH * 0.36, bodyH * 0.18, '800');
+            g.fillStyle = '#000'; g.font = `800 ${cf.fs}px ${FONT}`;
+            g.fillText(cf.text, pad, bodyTop + bodyH * 0.5);
+            const df = fitText(g, todayStr(), leftW, bodyH * 0.14, bodyH * 0.09, '400');
+            g.fillStyle = '#555'; g.font = `400 ${df.fs}px ${FONT}`;
+            g.fillText(df.text, pad, bodyBot - df.fs * 0.6);
+            return c;
+        }
+
+        // ---- sozlamalar ----
+        const QR_PRINT_KEY = 'mt_qr_print_v2';
+        const QR_PRESETS = ['40x30', '50x30', '58x40', '60x40', '70x50'];
+        function loadCfg() {
+            let cfg = { scope: 'all', fmt: '58x40', w: 58, h: 40, copies: 1, byQty: false };
+            try { cfg = Object.assign(cfg, JSON.parse(localStorage.getItem(QR_PRINT_KEY) || '{}')); } catch (e) {}
+            return cfg;
+        }
+        function saveCfg(cfg) { try { localStorage.setItem(QR_PRINT_KEY, JSON.stringify(cfg)); } catch (e) {} }
+        function readPrintCfg() {
+            const modal = document.getElementById('qr-print-modal');
+            if (modal.classList.contains('hidden')) return loadCfg();
+            const g = id => document.getElementById(id);
+            return { scope: g('qp-scope').value, fmt: g('qp-fmt').value, w: parseFloat(g('qp-w').value) || 58, h: parseFloat(g('qp-h').value) || 40,
+                     copies: Math.min(50, Math.max(1, parseInt(g('qp-copies').value) || 1)), byQty: g('qp-byqty').checked };
+        }
+        function cfgSize(cfg) {
+            if (cfg.fmt === 'a4') return { w: 60, h: 40 };
+            if (cfg.fmt === 'custom') return { w: Math.max(25, cfg.w), h: Math.max(20, cfg.h) };
+            const [w, h] = cfg.fmt.split('x').map(Number);
+            return { w, h };
+        }
+
+        // ---- bitta mahsulot yorlig'i ----
+        let qrCurrentId = null;
+        function renderQrPreview() {
+            const p = db.products.find(x => x.id === qrCurrentId);
+            if (!p) return;
+            const sz = cfgSize(loadCfg());
+            document.getElementById('qr-img').src = labelCanvas(p, sz.w, sz.h, 16).toDataURL('image/png');
+        }
+        function openQrModal(id) {
+            if (typeof qrcode === 'undefined') { showToast("QR kutubxonasi yuklanmadi. Internetni tekshiring"); return; }
+            if (!db.products.find(x => x.id === id)) return;
+            ensureCodes();
+            qrCurrentId = id;
+            const cfg = loadCfg();
+            const sel = document.getElementById('qr-fmt1');
+            sel.innerHTML = QR_PRESETS.map(f => `<option value="${f}">${f.replace('x', ' × ')} mm</option>`).join('');
+            sel.value = QR_PRESETS.includes(cfg.fmt) ? cfg.fmt : '58x40';
+            if (!QR_PRESETS.includes(cfg.fmt)) { /* a4 / custom: ko'rinish uchun 58×40 */ }
+            renderQrPreview();
+            document.getElementById('qr-modal').classList.remove('hidden');
+        }
+        function onQrFmt1Change() {
+            const cfg = loadCfg();
+            cfg.fmt = document.getElementById('qr-fmt1').value;
+            saveCfg(cfg);
+            renderQrPreview();
+        }
+        function closeQrModal() { document.getElementById('qr-modal').classList.add('hidden'); }
+
+        function downloadQr() {
+            const p = db.products.find(x => x.id === qrCurrentId);
+            if (!p) return;
+            const sz = cfgSize(loadCfg());
+            labelCanvas(p, sz.w, sz.h, 16).toBlob(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'QR_' + (p.code || '') + '_' + (p.name || 'mahsulot').replace(/[^\w\u0400-\u04FF-]+/g, '_') + '.png';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                showToast('Yorliq yuklab olindi');
+            }, 'image/png');
+        }
+        function printOneQr() {
+            const p = db.products.find(x => x.id === qrCurrentId);
+            if (!p) return;
+            printLabels([{ p, n: 1 }], loadCfg());
+        }
+
+        // ---- hammasini chop etish ----
+        function omborFiltered() {
+            const q = (document.getElementById('ombor-search')?.value || '').toLowerCase();
+            const catF = document.getElementById('ombor-cat-filter')?.value || '';
+            return db.products.filter(p => (!catF || p.category === catF) && ((p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)));
+        }
+        function openPrintModal() {
+            if (typeof qrcode === 'undefined') { showToast("QR kutubxonasi yuklanmadi. Internetni tekshiring"); return; }
+            const g = id => document.getElementById(id), cfg = loadCfg();
+            g('qp-fmt').value = cfg.fmt; g('qp-w').value = cfg.w; g('qp-h').value = cfg.h;
+            g('qp-copies').value = cfg.copies; g('qp-byqty').checked = !!cfg.byQty; g('qp-scope').value = 'all';
+            g('qr-print-modal').classList.remove('hidden');
+            updatePrintInfo();
+        }
+        function printJobList(cfg) {
+            const src = cfg.scope === 'filter' ? omborFiltered() : db.products;
+            return src.map(p => ({ p, n: cfg.byQty ? Math.max(0, p.qty || 0) : cfg.copies })).filter(x => x.n > 0);
+        }
+        function updatePrintInfo() {
+            const cfg = readPrintCfg();
+            document.getElementById('qp-custom').classList.toggle('hidden', cfg.fmt !== 'custom');
+            document.getElementById('qp-copies').disabled = cfg.byQty;
+            const jobs = printJobList(cfg), total = jobs.reduce((a, x) => a + x.n, 0);
+            document.getElementById('qp-info').textContent = `${jobs.length} ta mahsulot · jami ${total} ta yorliq`;
+        }
+        function printSelectedQr() {
+            const cfg = readPrintCfg();
+            const jobs = printJobList(cfg), total = jobs.reduce((a, x) => a + x.n, 0);
+            if (!total) { showToast("Chop etish uchun mahsulot yo'q"); return; }
+            if (total > 300 && !confirm(`${total} ta yorliq chop etiladi. Davom etasizmi?`)) return;
+            saveCfg(cfg);
+            document.getElementById('qr-print-modal').classList.add('hidden');
+            printLabels(jobs, cfg);
+        }
+        function printLabels(jobs, cfg) {
+            ensureCodes();
+            const a4 = cfg.fmt === 'a4', { w, h } = cfgSize(cfg);
+            const html = jobs.map(({ p, n }) => {
+                const src = labelCanvas(p, w, h, 16).toDataURL('image/png');
+                return `<div class="qr-label${a4 ? ' a4' : ''}" style="width:${w}mm;height:${h}mm"><img src="${src}" style="width:100%;height:100%"></div>`.repeat(n);
+            }).join('');
+            const area = document.getElementById('qr-print-area');
+            area.className = a4 ? 'a4' : '';
+            area.innerHTML = html;
+            let st = document.getElementById('qr-page-style');
+            if (!st) { st = document.createElement('style'); st.id = 'qr-page-style'; document.head.appendChild(st); }
+            st.textContent = a4 ? '@page { size: A4; margin: 8mm; }' : `@page { size: ${w}mm ${h}mm; margin: 0; }`;
+            const done = () => { area.innerHTML = ''; window.removeEventListener('afterprint', done); };
+            window.addEventListener('afterprint', done);
+            setTimeout(() => window.print(), 250);
+        }
+
+        // =====================================================
+        //  SKANER
+        // =====================================================
+        let scanStream = null, scanTimer = null, scanBD = null, scanLastWarn = '', scanLastWarnAt = 0;
+        try { if ('BarcodeDetector' in window) scanBD = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { scanBD = null; }
+
+        function setScanStatus(msg, bad) {
+            const el = document.getElementById('scan-status');
+            el.textContent = msg;
+            el.className = 'text-sm font-bold leading-snug ' + (bad ? 'text-amber-300' : 'text-white');
+        }
+        function stopStream() {
+            clearTimeout(scanTimer); scanTimer = null;
+            if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+            const v = document.getElementById('scan-video');
+            if (v) v.srcObject = null;
+        }
+        function closeScanner() { stopStream(); document.getElementById('scan-modal').classList.add('hidden'); }
+        document.addEventListener('visibilitychange', () => { if (document.hidden && scanStream) closeScanner(); });
+
+        async function openScanner() {
+            document.getElementById('scan-modal').classList.remove('hidden');
+            await startCamera();
+        }
+
+        async function startCamera() {
+            stopStream();
+            setScanStatus('Kamera ochilmoqda...');
+            if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setScanStatus("Kamera bu yerda ochilmaydi: sayt https:// orqali ochilishi kerak (yoki Chrome/Safari brauzerida oching). Pastdagi «Rasmga olish» tugmasi bilan ham skanerlash mumkin.", true);
+                return;
+            }
+            if (!scanBD) await ensureLib(() => typeof jsQR !== 'undefined', LIB_JSQR);
+            try {
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                } catch (e1) {
+                    if (e1 && (e1.name === 'NotAllowedError' || e1.name === 'SecurityError')) throw e1;
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                }
+                if (document.getElementById('scan-modal').classList.contains('hidden')) { stream.getTracks().forEach(t => t.stop()); return; }
+                scanStream = stream;
+                const v = document.getElementById('scan-video');
+                v.setAttribute('playsinline', ''); v.muted = true;
+                v.srcObject = stream;
+                await v.play();
+                setScanStatus("QR-kodni ramkaga to'g'rilang");
+                scanTick();
+            } catch (err) {
+                stopStream();
+                const n = err && err.name;
+                setScanStatus(
+                    n === 'NotAllowedError' || n === 'SecurityError' ? "Kameraga ruxsat berilmagan. Brauzer manzil qatoridagi 🔒 belgisi orqali kameraga ruxsat bering va «Qayta urinish»ni bosing."
+                    : n === 'NotFoundError' || n === 'DevicesNotFoundError' ? "Kamera topilmadi. «Rasmga olish» tugmasidan foydalaning."
+                    : n === 'NotReadableError' ? "Kamerani boshqa dastur ishlatyapti. Uni yopib, «Qayta urinish»ni bosing."
+                    : "Kamerani ochib bo'lmadi (" + (n || 'xato') + "). «Rasmga olish» tugmasidan foydalaning.", true);
+            }
+        }
+
+        async function decodeCanvas(c, useBoth) {
+            if (scanBD) {
+                try { const r = await scanBD.detect(c); if (r && r.length && r[0].rawValue) return r[0].rawValue; }
+                catch (e) { scanBD = null; }
+            }
+            if ((!scanBD || useBoth) && typeof jsQR !== 'undefined') {
+                const g = c.getContext('2d', { willReadFrequently: true });
+                const img = g.getImageData(0, 0, c.width, c.height);
+                const code = jsQR(img.data, c.width, c.height, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) return code.data;
+            }
+            return null;
+        }
+
+        async function scanTick() {
+            if (!scanStream) return;
+            const v = document.getElementById('scan-video');
+            if (v.readyState >= 2 && v.videoWidth) {
+                const sc = Math.min(1, 720 / v.videoWidth);
+                const c = document.getElementById('scan-canvas');
+                c.width = Math.round(v.videoWidth * sc); c.height = Math.round(v.videoHeight * sc);
+                c.getContext('2d', { willReadFrequently: true }).drawImage(v, 0, 0, c.width, c.height);
+                let text = null;
+                try { text = await decodeCanvas(c, false); } catch (e) {}
+                if (!scanStream) return;
+                if (text && handleScan(text)) return;
+            }
+            scanTimer = setTimeout(scanTick, 120);
+        }
+
+        async function scanFromFile(input) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            setScanStatus("Rasm o'qilmoqda...");
+            try {
+                if (!scanBD) await ensureLib(() => typeof jsQR !== 'undefined', LIB_JSQR);
+                const url = URL.createObjectURL(f);
+                const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+                let text = null;
+                for (const maxW of [1600, 900, 2400]) {
+                    const sc = Math.min(1, maxW / img.naturalWidth);
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+                    c.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, c.width, c.height);
+                    text = await decodeCanvas(c, true);
+                    if (text) break;
+                }
+                URL.revokeObjectURL(url);
+                if (text) handleScan(text);
+                else setScanStatus("QR-kod topilmadi. QR-kodni yaqinroq, aniq va yorug'da suratga oling.", true);
+            } catch (e) {
+                setScanStatus("Rasmni o'qib bo'lmadi. Qayta urinib ko'ring.", true);
+            }
+        }
+
+        function scanManual() {
+            const v = prompt("Mahsulot kodini kiriting (yorliqdagi katta raqam, masalan 1041):");
+            if (v && v.trim()) handleScan(v.trim());
+        }
+
+        function handleScan(text) {
+            text = String(text).trim();
+            let p = null, msg = '';
+            if (text.startsWith(QR_PREFIX)) {
+                p = db.products.find(x => x.id === text.slice(QR_PREFIX.length));
+                if (!p) msg = "Mahsulot topilmadi (o'chirilgan bo'lishi mumkin)";
+            } else if (/^\d{3,6}$/.test(text)) {
+                p = db.products.find(x => String(x.code) === text);
+                if (!p) msg = text + " kodli mahsulot topilmadi";
+            } else msg = "Bu QR-kod Mega Texnoga tegishli emas";
+            if (p) { closeScanner(); applyScannedProduct(p); return true; }
+            const now = Date.now();
+            if (msg !== scanLastWarn || now - scanLastWarnAt > 2500) { setScanStatus(msg, true); scanLastWarn = msg; scanLastWarnAt = now; }
+            return false;
+        }
+
+        function scanBeep() {
+            try {
+                if (navigator.vibrate) navigator.vibrate(80);
+                const ac = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ac.createOscillator(), gn = ac.createGain();
+                o.type = 'sine'; o.frequency.value = 1000; gn.gain.value = 0.15;
+                o.connect(gn); gn.connect(ac.destination);
+                o.start(); o.stop(ac.currentTime + 0.12);
+                setTimeout(() => ac.close(), 400);
+            } catch (e) {}
+        }
+
+        function applyScannedProduct(p) {
+            scanBeep();
+            const sel = document.getElementById('s-product'), qty = document.getElementById('s-qty');
+            const same = sel.value === p.id;
+            sel.value = p.id;
+            qty.value = same ? (parseInt(qty.value) || 1) + 1 : 1;
+            onSelectSaleProduct();
+            const focusEl = hasMoney(moveType) ? document.getElementById('s-price') : qty;
+            [sel, qty, focusEl].forEach(el => { el.classList.remove('flash-field'); void el.offsetWidth; el.classList.add('flash-field'); });
+            focusEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(() => { try { focusEl.focus(); focusEl.select && focusEl.select(); } catch (e) {} }, 250);
+            const out = MOVE_TYPES[moveType].sign < 0 && !(p.qty > 0);
+            showToast(out ? `${p.name} — omborda qolmagan!` : `✓ ${p.name}${same ? ' (+1)' : ''} — ${hasMoney(moveType) ? 'narx va kim sotganini kiriting' : 'sonini kiriting'}`);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setMoveType('sotuv');
+            initFirebaseRTDBSync();
+            if (currentUser) {
+                document.getElementById('login-screen').classList.add('hidden');
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+            renderAll();
+        });
+    </script>
+</body>
+</html>
